@@ -55,3 +55,36 @@
   item.addEventListener("pointerleave",()=>item.classList.remove("is-pressed"),{passive:true});
  }
 })();
+
+
+/* Horizontal swipe navigation across RAPS Creative pages (touch-only). */
+(()=>{
+ "use strict";
+ const routes=["/","/website/","/ugc/","/editing/","/content-creation/","/social-media/","/portofolio/"];
+ const canonical=location.pathname.replace(/\/index\.html$/,"/").replace(/\/{2,}/g,"/");
+ const page=canonical.endsWith("/")?canonical:canonical+"/";
+ const index=routes.indexOf(page);
+ if(index<0||!window.addEventListener)return;
+ let start=null,changing=false;
+ const ignore='a,button,input,textarea,select,summary,[contenteditable="true"],[role="slider"],[data-no-swipe]';
+ document.addEventListener("touchstart",(event)=>{
+  if(event.touches.length!==1||changing||document.querySelector("dialog[open]")){start=null;return}
+  const t=event.target;
+  if(t?.closest?.(ignore)){start=null;return}
+  const p=event.touches[0];start={x:p.clientX,y:p.clientY,time:Date.now()};
+ },{passive:true});
+ document.addEventListener("touchcancel",()=>{start=null},{passive:true});
+ document.addEventListener("touchend",(event)=>{
+  if(!start||changing||event.changedTouches.length!==1){start=null;return}
+  const p=event.changedTouches[0],dx=p.clientX-start.x,dy=p.clientY-start.y,elapsed=Date.now()-start.time;start=null;
+  const width=Math.max(document.documentElement.clientWidth,320);
+  if(elapsed>1300||Math.abs(dx)<Math.min(95,width*.18)||Math.abs(dx)<Math.abs(dy)*1.65)return;
+  const target=routes[index+(dx<0?1:-1)];
+  if(!target)return;
+  changing=true;
+  const reduced=window.matchMedia?.("(prefers-reduced-motion:reduce)")?.matches;
+  if(reduced){location.assign(target);return}
+  document.body.classList.add(dx<0?"swipe-out-left":"swipe-out-right");
+  setTimeout(()=>location.assign(target),155);
+ },{passive:true});
+})();

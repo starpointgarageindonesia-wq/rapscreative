@@ -387,3 +387,41 @@ p{line-height:1.8}.eyebrow{color:#9c743d;letter-spacing:.14em}
 .foot-bottom{justify-content:flex-start}
 @media(max-width:1120px){.site-logo .brand-lockup strong{letter-spacing:-.012em;gap:.24em}.site-logo .brand-lockup small{font-size:8px;letter-spacing:.12em}}
 @media(max-width:600px){.site-logo .brand-lockup strong{font-size:16px;gap:.23em;letter-spacing:-.01em}.site-logo .brand-lockup small{font-size:7px;letter-spacing:.09em}.brand-marquee-track{gap:32px}.about-visual-card{box-shadow:10px 12px 0 #cbd6e3}.last-cta h2{font-size:clamp(36px,9vw,48px)}}
+
+/* Layout polish: remove secondary right-hand headings without reducing price/benefit content */
+.section-heading{display:block;max-width:990px}
+.section-heading>div{max-width:990px}
+.section-heading>p{display:none}
+.section-heading h2{text-wrap:balance}
+/* Continuous, uninterrupted horizontal brand name ticker */
+.brand-marquee{overflow:hidden}
+.brand-marquee-track{display:flex;gap:0;width:max-content;will-change:transform;animation:move-marquee 31s linear infinite}
+.brand-marquee-group{display:flex;flex:0 0 auto;align-items:center;gap:clamp(24px,3.7vw,58px);padding-right:clamp(24px,3.7vw,58px);white-space:nowrap}
+.brand-marquee-group>span{font-family:"Manrope",sans-serif;font-size:clamp(16px,2vw,23px);font-weight:850;letter-spacing:-.02em;color:#234464;flex-shrink:0}
+.brand-marquee:hover .brand-marquee-track{animation-play-state:running}
+@keyframes move-marquee{to{transform:translate3d(-50%,0,0)}}
+/* Actual branded icons, without glyph decorations. */
+.site-footer .foot-grid a:not(.footer-brand),.cta-actions>a,.nav-cta,.mobile-chat{
+ display:inline-flex;align-items:center;gap:10px;
+}
+.brand-icon{width:19px;height:19px;display:inline-block;object-fit:contain;flex-shrink:0;vertical-align:middle}
+.site-footer .brand-icon{width:18px;height:18px}
+.cta-actions .brand-icon{width:20px;height:20px}
+.nav-cta .brand-icon{width:17px;height:17px}
+.mobile-chat .brand-icon{width:20px;height:20px}
+.mobile-chat .chat-pulse{display:none}
+.contact-link-text{min-width:0}
+.site-footer .contact-link-text{overflow-wrap:anywhere}
+@media(max-width:600px){
+ .brand-marquee-group{gap:26px;padding-right:26px}
+ .brand-marquee-group>span{font-size:17px}
+ .cta-actions>a{justify-content:center}
+}
+body.swipe-out-left main{animation:swipe-out-l .16s ease-in both}
+body.swipe-out-right main{animation:swipe-out-r .16s ease-in both}
+@keyframes swipe-out-l{to{opacity:.58;transform:translate3d(-35px,0,0)}}
+@keyframes swipe-out-r{to{opacity:.58;transform:translate3d(35px,0,0)}}
+@media(prefers-reduced-motion:reduce){
+ .brand-marquee-track{animation:none!important}
+ body.swipe-out-left main,body.swipe-out-right main{animation:none!important}
+}
