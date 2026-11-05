@@ -224,3 +224,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline-color:#6d6f71
  .btn,.nav-cta,.price-details,.mobile-chat,.service-tile{animation:none!important;transition:none!important}
  .btn.tap-pop,.price-details.tap-pop,.nav-cta.tap-pop{animation:none!important}
 }
+
+/* Final text-contrast polish for the monochrome featured cards. */
+.price-card.card-featured h3,
+.price-card.card-featured .price-value,
+.price-card.card-featured .price-category,
+.price-card.card-featured .price-spark{color:#f8f7f3}
+.price-card.card-featured .price-description,
+.price-card.card-featured .price-care{color:#d0d1d0}
+.price-card.card-featured .price-details:focus-visible{outline-color:#f1f0ea}
