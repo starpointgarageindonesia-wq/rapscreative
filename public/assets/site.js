@@ -29,3 +29,29 @@
  dialog.addEventListener("close",()=>lastTrigger?.focus());
  }
 })();
+
+
+/* Tactile feedback: native links keep normal navigation and benefit buttons keep their modal. */
+(()=>{
+ const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+ if(reduced)return;
+ const targets=document.querySelectorAll(".btn,.nav-cta,.price-details,.mobile-chat,.service-tile");
+ for(const item of targets){
+  let tid;
+  item.addEventListener("pointerdown",event=>{
+   if(event.button!==0)return;
+   item.classList.remove("tap-pop");
+   item.classList.add("is-pressed");
+  },{passive:true});
+  item.addEventListener("pointerup",()=>{
+   item.classList.remove("is-pressed");
+   item.classList.remove("tap-pop");
+   void item.offsetWidth;
+   item.classList.add("tap-pop");
+   clearTimeout(tid);
+   tid=setTimeout(()=>item.classList.remove("tap-pop"),420);
+  },{passive:true});
+  item.addEventListener("pointercancel",()=>item.classList.remove("is-pressed"),{passive:true});
+  item.addEventListener("pointerleave",()=>item.classList.remove("is-pressed"),{passive:true});
+ }
+})();
