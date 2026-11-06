@@ -85,6 +85,6 @@
   const reduced=window.matchMedia?.("(prefers-reduced-motion:reduce)")?.matches;
   if(reduced){location.assign(target);return}
   document.body.classList.add(dx<0?"swipe-out-left":"swipe-out-right");
-  setTimeout(()=>location.assign(target),155);
+  location.assign(target);
  },{passive:true});
 })();
