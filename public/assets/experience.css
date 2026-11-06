@@ -143,3 +143,11 @@ body{background:var(--surface-page)}
 .preview-label{font-size:clamp(7px,.7vw,11px);font-weight:800;letter-spacing:.1em;border-top:1px solid #ffffff80;padding-top:10px}
 .portfolio-preview--cireng .preview-screen{color:#42250e}
 @media(max-width:760px){.portfolio-triptych{min-height:280px}.portfolio-preview{border-width:4px;border-radius:12px}.preview-headline{font-size:clamp(13px,4vw,24px)}.preview-top span:last-child{display:none}.preview-label{font-size:7px}}
+
+
+.portfolio-preview{isolation:isolate}
+.portfolio-live-frame{position:absolute;inset:0;width:1000px;height:1400px;border:0;transform:scale(.32);transform-origin:top left;pointer-events:none;background:white;z-index:4}
+.portfolio-preview--garage .portfolio-live-frame{transform:scale(.38)}
+.portfolio-preview--cireng .portfolio-live-frame{transform:scale(.31)}
+.portfolio-preview--profile .portfolio-live-frame{transform:scale(.25)}
+@media(max-width:760px){.portfolio-live-frame{transform:scale(.18)}.portfolio-preview--garage .portfolio-live-frame{transform:scale(.2)}.portfolio-preview--cireng .portfolio-live-frame{transform:scale(.16)}.portfolio-preview--profile .portfolio-live-frame{transform:scale(.14)}}
