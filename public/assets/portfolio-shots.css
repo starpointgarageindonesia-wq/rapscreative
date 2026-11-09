@@ -25,3 +25,5 @@
 @media(max-width:1000px){.page-website .raps-live-montage{width:min(100%,750px);height:clamp(340px,70vw,530px);margin:0 auto}}
 @media(max-width:560px){.page-website .raps-live-montage{height:clamp(255px,78vw,350px)}.page-website .raps-shot-bezel{padding:5px;border-width:1px;border-radius:12px}.page-website .raps-shot-toolbar{height:16px;min-height:16px;font-size:6px;padding:0 6px;border-radius:5px 5px 0 0}.page-website .raps-shot-dots i{width:3px;height:3px}.page-website .raps-shot-dots{gap:2px}.page-website .raps-shot-display{border-radius:0 0 5px 5px}.page-website .raps-shot-label{padding:5px 7px;font-size:8px}.page-website .raps-shot-placeholder strong{font-size:11px}.page-website .raps-shot-placeholder span{font-size:7px}}
 @media(prefers-reduced-motion:reduce){.page-website .raps-shot{transition:none}}
+
+.page-website .raps-shot-display img[hidden]{display:none!important}
