@@ -27,3 +27,21 @@
 @media(prefers-reduced-motion:reduce){.page-website .raps-shot{transition:none}}
 
 .page-website .raps-shot-display img[hidden]{display:none!important}
+
+
+/* 2026-11-09 Safari/iPad layout fix: the montage had only absolutely-positioned
+   children, so its parent CSS grid computed an almost-zero intrinsic track.
+   Give the art a definite full-width containing block and avoid 3D flattening. */
+.page-website .service-hero-art{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;align-self:center!important}
+.page-website .portfolio-montage.raps-live-montage{display:block!important;position:relative!important;width:100%!important;max-width:850px!important;min-width:0!important;margin-inline:auto!important;height:clamp(380px,43vw,590px)!important}
+.page-website .raps-live-montage>.raps-shot{width:auto;transform:none;min-width:0;backface-visibility:visible;perspective:none;transform-origin:center center}
+.page-website .raps-live-montage>.raps-shot-garage{width:78%;left:11%;top:1%;height:73%;transform:rotate(-1deg)}
+.page-website .raps-live-montage>.raps-shot-cireng{width:48%;left:0;bottom:2%;height:46%;transform:rotate(-2deg)}
+.page-website .raps-live-montage>.raps-shot-indonesia{width:48%;right:0;bottom:2%;height:46%;transform:rotate(2deg)}
+.page-website .raps-live-montage .raps-shot-bezel{box-sizing:border-box;width:100%;min-height:0}
+.page-website .raps-live-montage .raps-shot-display{width:100%;min-width:0}
+.page-website .raps-live-montage .raps-shot-display img{width:100%!important;height:100%!important;max-width:100%!important;object-fit:cover!important;object-position:top center!important;filter:none!important}
+@media(max-width:1000px){.page-website .portfolio-montage.raps-live-montage{width:100%!important;height:clamp(350px,58vw,530px)!important}}
+@media(max-width:760px){.page-website .portfolio-montage.raps-live-montage{height:clamp(265px,72vw,460px)!important}}
+@media(max-width:500px){.page-website .portfolio-montage.raps-live-montage{height:clamp(235px,75vw,340px)!important}}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){.page-website .raps-live-montage>.raps-shot:hover{transform:translateY(-6px) scale(1.02)}}
