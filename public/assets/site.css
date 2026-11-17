@@ -461,3 +461,6 @@ body.swipe-out-right main{animation:swipe-out-r .16s ease-in both}
  .hero-home .hero-art{padding:9px 4px 22px;min-height:0}
  .hero-home .hero-shot{width:100%;height:auto;border-radius:16px;border-width:2px}
 }
+
+/* Hide redundant small section captions sitewide; preserve the approved homepage region badge. */
+span.eyebrow:not(.badge-hero){display:none!important}
