@@ -1,6 +1,6 @@
 /* Fallback between real-site screenshot services, then branded static preview. */
 (()=>{"use strict";
-for(const img of document.querySelectorAll(".raps-live-montage img[data-shot-fallback]")){
+for(const img of document.querySelectorAll(".raps-live-montage img[data-shot-fallback], .raps-web-shot-card img[data-shot-fallback]")){
  img.addEventListener("error",()=>{
   if(img.dataset.fallbackTried==="yes"){img.hidden=true;return}
   img.dataset.fallbackTried="yes";
