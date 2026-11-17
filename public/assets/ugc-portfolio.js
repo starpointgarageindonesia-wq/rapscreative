@@ -1,0 +1,1 @@
+(()=>{"use strict";const videos=[...document.querySelectorAll(".raps-ugc-showcase video")];videos.forEach(v=>v.addEventListener("play",()=>videos.forEach(other=>{if(other!==v&&!other.paused)other.pause()})));})();
