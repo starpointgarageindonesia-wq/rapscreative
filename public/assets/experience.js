@@ -47,7 +47,7 @@
   document.querySelectorAll('[data-lang-choice]').forEach(button=>button.addEventListener('click',()=>{
     if(button.dataset.langChoice==='en'){
       remember('raps-language','en');
-      const path=location.pathname.replace(/index\\.html$/,'').replace(/\\/?$/,'/');
+      const path=location.pathname.replace(/index\.html$/,'').replace(/\/?$/,'/');
       const enSpecial={'/':'/en/','/harga/':'/en/pricing/','/portofolio/':'/en/portfolio/'};
       location.assign(enSpecial[path]||'/en'+path);
       return;
