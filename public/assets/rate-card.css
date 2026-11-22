@@ -9,3 +9,6 @@
 .hero-promo-link span{color:#d9e7fa;font-size:11px}
 .hero-promo-link:hover{background:#ffffff29;transform:translateY(-2px)}
 @media(max-width:650px){.hero-promo-link{border-radius:17px;line-height:1.5;font-size:11px;padding:9px 12px}.hero-promo-link strong{font-size:12px}.hero-promo-link span{font-size:10px}}
+
+/* Transparent bundle pricing: regular value, current price, and exact saving. */
+.rc-old-price{display:block;width:max-content;margin:14px 0 2px;color:#7a8090;font-size:16px;font-weight:750;letter-spacing:-.02em;text-decoration-thickness:2px}.rc-save{display:inline-flex;width:max-content;margin:0 0 14px;padding:5px 9px;border-radius:999px;background:#e5f6e8;color:#216a42;font-size:10px;font-weight:850}.rc-contract{margin:-3px 0 14px!important;color:#5d6880;font-size:11px!important;font-weight:700}.rc-price-total{font-size:clamp(27px,2.5vw,36px)}html[data-theme="dark"] .rc-old-price,html[data-theme="dark"] .rc-contract{color:#abb4c6}
