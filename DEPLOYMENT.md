@@ -24,7 +24,7 @@ Source website publik berada di folder `public/`. Konfigurasi Workers Static Ass
 Cloudflare menyediakan integrasi native GitHub tanpa penyimpanan API token di repository. Jangan menaruh API token, password, atau secret di source.
 
 ## QA
-- Halaman promo website UMKM Rp399.000/tahun
+- Halaman promo website UMKM Rp349.000/tahun
 - Rate card: `/harga/`, `/website/`, `/ugc/`, `/editing/`, `/content-creation/`, `/social-media/`
 - Kalkulator add-on dan CTA WhatsApp `/harga/?service=umkm#hitung`
 - Mobile, dark mode, bahasa, tautan, HTTPS
