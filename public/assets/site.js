@@ -60,11 +60,14 @@
 /* Horizontal swipe navigation across RAPS Creative pages (touch-only). */
 (()=>{
  "use strict";
- const routes=["/","/website/","/ugc/","/editing/","/content-creation/","/social-media/","/portofolio/"];
+ const routes=["/","/website/","/ugc/","/editing/","/content-creation/","/marketing/","/social-media/","/undangan-digital/","/paket/","/harga/"];
  const canonical=location.pathname.replace(/\/index\.html$/,"/").replace(/\/{2,}/g,"/");
  const page=canonical.endsWith("/")?canonical:canonical+"/";
  const index=routes.indexOf(page);
  if(index<0||!window.addEventListener)return;
+ [routes[index-1],routes[index+1]].filter(Boolean).forEach(href=>{
+  const link=document.createElement("link");link.rel="prefetch";link.href=href;document.head.append(link);
+ });
  let start=null,changing=false;
  const ignore='a,button,input,textarea,select,summary,[contenteditable="true"],[role="slider"],[data-no-swipe]';
  document.addEventListener("touchstart",(event)=>{
@@ -82,9 +85,6 @@
   const target=routes[index+(dx<0?1:-1)];
   if(!target)return;
   changing=true;
-  const reduced=window.matchMedia?.("(prefers-reduced-motion:reduce)")?.matches;
-  if(reduced){location.assign(target);return}
-  document.body.classList.add(dx<0?"swipe-out-left":"swipe-out-right");
   location.assign(target);
  },{passive:true});
 })();

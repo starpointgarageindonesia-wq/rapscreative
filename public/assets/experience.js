@@ -48,7 +48,7 @@
     if(button.dataset.langChoice==='en'){
       remember('raps-language','en');
       const path=location.pathname.replace(/index\.html$/,'').replace(/\/?$/,'/');
-      const enSpecial={'/':'/en/','/harga/':'/en/pricing/','/portofolio/':'/en/portfolio/'};
+      const enSpecial={'/':'/en/','/harga/':'/en/pricing/'};
       location.assign(enSpecial[path]||'/en'+path);
       return;
     }
