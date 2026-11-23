@@ -151,7 +151,7 @@
   window.scrollTo(0,0);buildGuide();syncLanguageAndTheme();softControlsActive=true;
   body.classList.add("animate-in");
   if(!reduced){body.classList.add("swipe-entering",direction==="next"?"swipe-arrive-next":"swipe-arrive-previous")}
-  window.dispatchEvent(new CustomEvent("raps:route-loaded"));
+  document.dispatchEvent(new CustomEvent("raps:route-loaded"));
   scriptURLs.forEach(src=>{const script=document.createElement("script");script.src=new URL(src,location.origin).href;script.async=false;script.onload=()=>{};body.append(script)});
   const clear=()=>{body.classList.remove("swipe-entering","swipe-arrive-next","swipe-arrive-previous");body.removeAttribute("style");root.classList.remove("swipe-exiting");delete root.dataset.swipeDir;body.removeEventListener("animationend",finish);changing=false};
   const finish=event=>{if(event.target===body)clear()};
@@ -161,7 +161,6 @@
  };
  window.rapsSoftNavigate=softNavigate;
  buildGuide();prewarmAdjacent();
- document.addEventListener("raps:route-loaded",()=>{});
  document.addEventListener("click",event=>{
   const themeButton=event.target.closest?.("[data-theme-toggle]");
   if(themeButton&&softControlsActive){event.preventDefault();const dark=root.dataset.theme!=="dark";root.dataset.theme=dark?"dark":"light";try{localStorage.setItem("raps-theme",root.dataset.theme)}catch{};syncLanguageAndTheme();return}
@@ -177,7 +176,7 @@
   if(targetPath===normalize(location.pathname)){if(!url.hash){event.preventDefault();window.scrollTo({top:0,behavior:reduced?"instant":"smooth"})}return}
   event.preventDefault();const direction=targetIndex>=index?"next":"previous";void softNavigate(url.pathname+url.search+url.hash,direction);
  });
- document.addEventListener("popstate",()=>{
+ window.addEventListener("popstate",()=>{
   const target=normalize(location.pathname),targetRoutes=routesFor(target);if(!targetRoutes.includes(target))return;
   const nextIndex=targetRoutes.indexOf(target),crossLanguage=target.startsWith("/en/")!==currentPath.startsWith("/en/"),direction=crossLanguage?(target.startsWith("/en/")?"next":"previous"):(nextIndex>=index?"next":"previous");
   void softNavigate(location.pathname+location.search+location.hash,direction,false);
