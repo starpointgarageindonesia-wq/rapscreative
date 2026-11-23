@@ -485,22 +485,26 @@ span.eyebrow:not(.badge-hero){display:none!important}
 @keyframes swipe-guide-dot{to{transform:translateX(26px)}}
 @media(prefers-reduced-motion:reduce){.swipe-guide-motion i{animation:none;transform:translateX(13px)}}
 
-/* Finger-linked paging: one flat surface, matching native iOS page swipes. */
+/* Cross-document navigation: the browser owns the page snapshots.
+   No duplicate DOM layers, zoom, body transformations, or text fade. */
 @media(pointer:coarse){body{touch-action:pan-y pinch-zoom}}
-html.swipe-tracking,html.swipe-committing{overflow-x:hidden;overscroll-behavior-x:none;background:var(--surface-page,#fff)}
-[data-theme="dark"].swipe-tracking{background:#0c1624}
-html.route-fallback{overflow-x:hidden}
-html.swipe-tracking body{will-change:transform;user-select:none;cursor:grabbing}
-@supports (view-transition-name:root){
- @view-transition{navigation:none}
- html::view-transition-group(root){animation-duration:340ms;animation-timing-function:cubic-bezier(.22,.7,.18,1)}
- html::view-transition-old(root),html::view-transition-new(root){animation-duration:340ms;animation-timing-function:cubic-bezier(.22,.7,.18,1);mix-blend-mode:normal}
- html[data-route-direction="next"]::view-transition-old(root){animation-name:raps-route-out-left}
- html[data-route-direction="next"]::view-transition-new(root){animation-name:raps-route-in-right}
- html[data-route-direction="previous"]::view-transition-old(root){animation-name:raps-route-out-right}
- html[data-route-direction="previous"]::view-transition-new(root){animation-name:raps-route-in-left}
+@view-transition{navigation:auto}
+html::view-transition-group(root){animation:none!important}
+html::view-transition-old(root),html::view-transition-new(root){
+  mix-blend-mode:normal;
+  animation-duration:290ms;
+  animation-timing-function:cubic-bezier(.32,.72,0,1);
+  animation-fill-mode:both;
+  backface-visibility:hidden
 }
-@keyframes raps-route-out-left{to{transform:translateX(-100vw)}}
-@keyframes raps-route-in-right{from{transform:translateX(100vw)}to{transform:translateX(0)}}
-@keyframes raps-route-out-right{to{transform:translateX(100vw)}}
-@keyframes raps-route-in-left{from{transform:translateX(-100vw)}to{transform:translateX(0)}}
+html::view-transition-old(root){animation-name:raps-native-out-left}
+html::view-transition-new(root){animation-name:raps-native-in-right}
+html[data-route-direction="previous"]::view-transition-old(root){animation-name:raps-native-out-right}
+html[data-route-direction="previous"]::view-transition-new(root){animation-name:raps-native-in-left}
+@keyframes raps-native-out-left{from{transform:translateX(0)}to{transform:translateX(-100vw)}}
+@keyframes raps-native-in-right{from{transform:translateX(100vw)}to{transform:translateX(0)}}
+@keyframes raps-native-out-right{from{transform:translateX(0)}to{transform:translateX(100vw)}}
+@keyframes raps-native-in-left{from{transform:translateX(-100vw)}to{transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){
+ html::view-transition-old(root),html::view-transition-new(root){animation-duration:.01ms!important}
+}
