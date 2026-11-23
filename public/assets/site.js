@@ -64,6 +64,7 @@
   const center=innerHeight*.5,span=Math.max(innerHeight*.85,1);
   const measured=motionItems.map(el=>({el,rect:el.getBoundingClientRect()}));
   measured.forEach(({el,rect})=>{
+   if(el.tagName==="IMG"&&rect.width<100&&rect.height<64){el.style.willChange="";return}
    if(rect.bottom< -80||rect.top>innerHeight+80){el.style.willChange="";return}
    const delta=(rect.top+rect.height*.5-center)/span,depth=Math.max(0,1-Math.min(1,Math.abs(delta)));
    el.style.willChange="translate,scale";
