@@ -124,8 +124,8 @@
  if(window.__rapsReloadRedirecting)return;
  const root=document.documentElement,body=document.body,reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
  const normalize=value=>{const path=new URL(value,location.href).pathname.replace(/\/index\.html$/,"/").replace(/\/{2,}/g,"/");return path.endsWith("/")?path:path+"/"};
- const routesFor=path=>path.startsWith("/en/")?["/en/","/en/website/","/en/ugc/","/en/editing/","/en/content-creation/","/en/marketing/","/en/social-media/","/en/digital-invitation/","/en/bundles/","/en/pricing/"]:["/","/website/","/ugc/","/editing/","/content-creation/","/marketing/","/social-media/","/undangan-digital/","/paket/","/harga/"];
- const labelsFor=english=>english?["Home","Website","UGC","Editing","Content","Marketing","Social","Invitation","Bundles","Pricing"]:["Beranda","Website","UGC","Editing","Konten","Marketing","Social Media","Undangan","Bundling","Harga"];
+ const routesFor=path=>path.startsWith("/en/")?["/en/","/en/website/","/en/ugc/","/en/editing/","/en/content-creation/","/en/advertising/","/en/marketing/","/en/digital-invitation/","/en/social-media/","/en/bundles/","/en/pricing/"]:["/","/website/","/ugc/","/editing/","/content-creation/","/advertising/","/marketing/","/undangan-digital/","/social-media/","/paket/","/harga/"];
+ const labelsFor=english=>english?["Home","Website","UGC","Editing","Content","Advertising","Marketing","Invitation","Social","Bundles","Pricing"]:["Beranda","Website","UGC","Editing","Konten","Advertising","Marketing","Undangan","Social Media","Bundling","Harga"];
  let routes=routesFor(location.pathname),labels=labelsFor(location.pathname.startsWith("/en/")),currentPath=normalize(location.pathname),index=routes.indexOf(currentPath);
  if(index<0)return;
  let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
@@ -133,6 +133,14 @@
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
+ const syncServiceNav=()=>{
+  const english=location.pathname.startsWith("/en/"),path=normalize(location.pathname);
+  const desktop=english?[["/en/","Home"],["/en/website/","Website"],["/en/ugc/","UGC"],["/en/editing/","Editing"],["/en/advertising/","Advertising"],["/en/marketing/","Marketing"],["/en/digital-invitation/","Digital Invitation"],["/en/social-media/","Social Media"],["/en/pricing/","Pricing"]]:[["/","Beranda"],["/website/","Website"],["/ugc/","UGC"],["/editing/","Editing"],["/advertising/","Advertising"],["/marketing/","Marketing"],["/undangan-digital/","Undangan Digital"],["/social-media/","Social Media"],["/harga/","Harga"]];
+  const mobile=english?[["/en/","Home"],["/en/website/","Website"],["/en/ugc/","UGC"],["/en/editing/","Editing"],["/en/content-creation/","Content Creation"],["/en/advertising/","Advertising"],["/en/marketing/","Marketing"],["/en/digital-invitation/","Digital Invitation"],["/en/social-media/","Social Media"],["/en/bundles/","Bundles"],["/en/pricing/","Pricing"]]:[["/","Beranda"],["/website/","Website"],["/ugc/","UGC & Creator"],["/editing/","RAPS Edit"],["/content-creation/","Content Creation"],["/advertising/","Advertising"],["/marketing/","Marketing"],["/undangan-digital/","Undangan Digital"],["/social-media/","Social Media Management"],["/paket/","Paket Bundling"],["/harga/","Harga"]];
+  const render=items=>items.map(([href,label])=>`<a href="${href}"${path===href?' aria-current="page"':''}>${label}</a>`).join("");
+  document.querySelectorAll(".desktop-nav").forEach(nav=>{nav.innerHTML=render(desktop)});
+  document.querySelectorAll(".mobile-nav nav").forEach(nav=>{const cta=nav.querySelector(".mobile-nav-cta")?.outerHTML||"";nav.innerHTML=render(mobile)+cta});
+ };
  const warmStyles=doc=>{
   const hrefs=[...doc.head.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]')].map(link=>new URL(link.getAttribute("href"),location.origin).href).filter(href=>!/\/assets\/(site|experience)\.css(?:\?|$)/.test(href));
   hrefs.forEach(href=>{if([...document.querySelectorAll("link[data-raps-preload]")].some(link=>link.dataset.rapsPreload===href)||[...document.querySelectorAll('link[rel="stylesheet"]')].some(link=>link.href===href))return;const link=document.createElement("link");link.rel="preload";link.as="style";link.href=href;link.dataset.rapsPreload=href;link.onload=()=>{link.dataset.loaded="true"};link.onerror=()=>{link.remove()};document.head.append(link)});
@@ -202,7 +210,7 @@
    body.className=incomingBody.className;body.innerHTML=incomingBody.innerHTML;body.removeAttribute("style");
    updateHead(doc);if(push)history.pushState({rapsSoft:true},"",target);
    routes=routesFor(location.pathname);labels=labelsFor(location.pathname.startsWith("/en/"));currentPath=normalize(location.pathname);index=routes.indexOf(currentPath);
-   window.scrollTo(0,0);buildGuide();syncLanguageAndTheme();softControlsActive=true;
+   window.scrollTo(0,0);syncServiceNav();buildGuide();syncLanguageAndTheme();softControlsActive=true;
    body.classList.add("animate-in");document.dispatchEvent(new CustomEvent("raps:route-loaded"));
    scriptURLs.forEach(src=>{const script=document.createElement("script");script.src=new URL(src,location.origin).href;script.async=false;body.append(script)});
   };
@@ -224,14 +232,14 @@
   const hash=new URL(target,location.href).hash;if(hash)setTimeout(()=>document.querySelector(hash)?.scrollIntoView({behavior:reduced?"instant":"smooth",block:"start"}),250);
  };
  window.rapsSoftNavigate=softNavigate;
- buildGuide();prewarmAdjacent();
+ syncServiceNav();buildGuide();prewarmAdjacent();
  document.addEventListener("click",event=>{
   const themeButton=event.target.closest?.("[data-theme-toggle]");
   if(themeButton&&softControlsActive){event.preventDefault();const dark=root.dataset.theme!=="dark";root.dataset.theme=dark?"dark":"light";try{localStorage.setItem("raps-theme",root.dataset.theme)}catch{};syncLanguageAndTheme();return}
   const langButton=event.target.closest?.("[data-lang-choice]");
   if(langButton&&softControlsActive){event.preventDefault();const toEnglish=langButton.dataset.langChoice==="en",path=normalize(location.pathname);let target;
-   if(toEnglish){const special={"/":"/en/","/harga/":"/en/pricing/","/paket/":"/en/bundles/","/undangan-digital/":"/en/digital-invitation/"};target=special[path]||"/en"+path}
-   else{const special={"/en/":"/","/en/pricing/":"/harga/","/en/bundles/":"/paket/","/en/digital-invitation/":"/undangan-digital/"};target=special[path]||path.replace(/^\/en\//,"/")}
+   if(toEnglish){const special={"/":"/en/","/harga/":"/en/pricing/","/paket/":"/en/bundles/","/undangan-digital/":"/en/digital-invitation/","/advertising/":"/en/advertising/"};target=special[path]||"/en"+path}
+   else{const special={"/en/":"/","/en/pricing/":"/harga/","/en/bundles/":"/paket/","/en/digital-invitation/":"/undangan-digital/","/en/advertising/":"/advertising/"};target=special[path]||path.replace(/^\/en\//,"/")}
    if(routesFor(target).includes(normalize(target)))void softNavigate(target,toEnglish?"next":"previous");return
   }
   const link=event.target.closest?.("a[href]");if(!link||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||link.target==="_blank"||link.hasAttribute("download"))return;
