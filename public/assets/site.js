@@ -132,12 +132,15 @@
    if(!link||link.sheet)return Promise.resolve();
    return new Promise(resolve=>{link.addEventListener("load",resolve,{once:true});link.addEventListener("error",resolve,{once:true})});
   });
-  const images=[...pane.querySelectorAll("img")].filter(img=>img.getBoundingClientRect().top<innerHeight*1.25).slice(0,8).map(img=>{
-   img.loading="eager";return img.decode?.().catch(()=>{})||Promise.resolve();
+  // Trigger first-screen image loads without making text/page movement wait.
+  [...pane.querySelectorAll("img")].filter(img=>img.getBoundingClientRect().top<innerHeight*1.25).slice(0,8).forEach(img=>{
+   img.loading="eager";
+   if(img.decode)void img.decode().catch(()=>{});
   });
-  const ready=Promise.allSettled([...css,document.fonts.ready,...images]).then(()=>{
-   if(pane.isConnected)pane.dataset.ready="true";return pane;
-  });
+  const ready=Promise.allSettled([...css,document.fonts.ready]).then(()=>new Promise(resolve=>{
+   // Wait for stable CSS and a full paint, not for remote photos or videos.
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{if(pane.isConnected)pane.dataset.ready="true";resolve(pane)}));
+  }));
   const entry={frame:pane,direction,ready};previewFrames.set(key,entry);return entry;
  };
  const prewarmAdjacent=()=>{
@@ -204,9 +207,9 @@
   const animateFallback=async()=>{
    let entry=previewFrames.get(path);if(gestureFrame)entry={frame:gestureFrame,direction};if(!entry)entry=preparePreview(path,doc);
   const frame=entry.frame,curve="transform 210ms cubic-bezier(.32,.72,0,1)";
-   if(frame.dataset.ready!=="true")await Promise.race([entry.ready,new Promise(resolve=>setTimeout(resolve,1300))]);
+   if(frame.dataset.ready!=="true")await Promise.race([entry.ready,new Promise(resolve=>setTimeout(resolve,2200))]);
    if(frame.dataset.ready!=="true"){
-    frame.remove();previewFrames.delete(path);commit();
+    frame.remove();previewFrames.delete(path);body.style.transition="none";body.style.transform="none";commit();
     document.querySelectorAll(".reveal,.scroll-reveal").forEach(el=>{const rect=el.getBoundingClientRect();if(rect.bottom>0&&rect.top<innerHeight)el.classList.add("seen")});
     return;
    }
