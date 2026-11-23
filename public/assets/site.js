@@ -14,67 +14,62 @@
  const sync=()=>{let d=Math.max(1,document.documentElement.scrollHeight-innerHeight),indicator=document.getElementById("scroll-indicator");if(indicator)indicator.style.width=Math.min(100,Math.max(0,scrollY/d*100))+"%";frame=false};
  addEventListener("scroll",()=>{if(!frame){frame=true;requestAnimationFrame(sync)}},{passive:true});addEventListener("resize",sync,{passive:true});sync();
  const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
- let revealObserver=null;
- const watchReveals=(immediate=false)=>{
- if(reduced||!("IntersectionObserver" in window))return;
- const selector=[
-  ".reveal", ".service-tile", ".story-card", ".price-card", ".faq", ".project-detail",
-  ".promo-note", ".feature-banner-inner", ".service-finale-inner", ".last-cta-inner",
-  ".section-heading", ".rc-head", ".rc-card", ".rc-addon-row", ".bundle-card", ".bundle-option",
-  ".about-grid > *", ".story-lede", ".raps-web-work-heading", ".raps-web-shot-card",
-  ".raps-web-work-card", ".website-feature", ".pricing-grid > *", ".pricing-cards > *",
-  ".portfolio-list > *", ".last-cta-inner > *", "main section article", ".portfolio-preview",
-  ".site-footer .foot-grid > *", ".site-footer .foot-bottom"
+ // Visible text is never held back on the first screen.
+ // Only sections BELOW the initial viewport animate once when scrolled into view.
+ const revealSelector=[
+  ".reveal",".service-tile",".story-card",".price-card",".faq",".project-detail",
+  ".promo-note",".feature-banner-inner",".service-finale-inner",".last-cta-inner",
+  ".section-heading",".rc-head",".rc-card",".rc-addon-row",".bundle-card",".bundle-option",
+  ".about-grid > *",".story-lede",".raps-web-work-heading",".raps-web-shot-card",
+  ".raps-web-work-card",".website-feature",".pricing-grid > *",".pricing-cards > *",
+  ".portfolio-list > *",".last-cta-inner > *","main section article",".portfolio-preview",
+  ".site-footer .foot-grid > *",".site-footer .foot-bottom"
  ].join(",");
- const items=[...document.querySelectorAll(selector)];
- const entering=[];
- if(!revealObserver)revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
-  const el=entry.target,box=entry.boundingClientRect;
-  // These elements were visible during the page swipe. Never hide them again
-  // because an observer delivered a stale offscreen entry after the swap.
-  if(el.dataset.rapsInstant==="true"){el.classList.add("seen");return}
-  if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting")||document.documentElement.classList.contains("swipe-committing")||document.documentElement.classList.contains("raps-route-swiping"))return;
-  if(entry.isIntersecting){
-   const fromBottom=box.top>innerHeight*.52;
-   el.style.setProperty("--reveal-y",fromBottom?"82px":"-82px");
-   el.style.setProperty("--reveal-angle",fromBottom?"7deg":"-7deg");
-   el.classList.add("seen");
-  }else{
-   const above=box.bottom<0;
-   el.style.setProperty("--reveal-y",above?"-82px":"82px");
-   el.style.setProperty("--reveal-angle",above?"-7deg":"7deg");
-   el.classList.remove("seen");
-  }
- }),{threshold:.06,rootMargin:"-2% 0px -2% 0px"});
- revealObserver.disconnect();
- const orderByParent=new Map();
- items.forEach(el=>{
+ const elements=[...document.querySelectorAll(revealSelector)];
+ const pending=new Set();
+ let revealObserver=null,scrollFrame=false;
+ // First-pass DOM is painted immediately, including hero text and every button.
+ elements.forEach(el=>{
   if(!el.classList.contains("reveal"))el.classList.add("scroll-reveal");
-  const parent=el.parentElement,order=orderByParent.get(parent)||0;
-  orderByParent.set(parent,order+1);
-  el.style.setProperty("--reveal-x",order%2?"44px":"-44px");
-  el.style.setProperty("--reveal-axis",order%2?"y":"x");
-  el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*16}ms`);
-  const rect=el.getBoundingClientRect(),visible=rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98;
-  // Keep content that was visible on the incoming screen permanently painted.
-  // Lower sections still use exactly the existing scroll animation.
-  if(immediate&&(visible||el.dataset.rapsInstant==="true"))el.dataset.rapsInstant="true";
-  if(el.dataset.rapsInstant==="true")el.classList.add("seen");
-  else el.classList.remove("seen");
-  if(visible){
-   entering.push(el);
-   if(immediate){
-    el.style.setProperty("--reveal-stagger","0ms");
-    el.classList.add("seen");
-   }
-  }
-  revealObserver.observe(el);
+  el.classList.add("seen");
+  el.classList.remove("raps-scroll-pending","raps-scroll-visible");
  });
+ if(!reduced&&"IntersectionObserver" in window){
+  const show=el=>{
+   if(!pending.has(el))return;
+   pending.delete(el);
+   el.classList.add("raps-scroll-visible");
+   revealObserver?.unobserve(el);
+  };
+  revealObserver=new IntersectionObserver(entries=>{
+   entries.forEach(entry=>{if(entry.isIntersecting)show(entry.target)});
+  },{threshold:0.01,rootMargin:"90px 0px 170px 0px"});
+  // Do not animate items already on screen or just below the fold.
+  // Above-the-fold content stays in the native cross-document swipe snapshot.
+  for(const el of elements){
+   const rect=el.getBoundingClientRect();
+   if(rect.top<=innerHeight+100||rect.bottom<=0)continue;
+   el.classList.add("raps-scroll-pending");
+   pending.add(el);
+   revealObserver.observe(el);
+  }
+  const checkVisible=()=>{
+   scrollFrame=false;
+   for(const el of pending){
+    const r=el.getBoundingClientRect();
+    if(r.top<=innerHeight+170&&r.bottom>=-90)show(el);
+   }
+  };
+  addEventListener("scroll",()=>{
+   if(!scrollFrame&&pending.size){
+    scrollFrame=true;
+    requestAnimationFrame(checkVisible);
+   }
+  },{passive:true});
+  addEventListener("resize",checkVisible,{passive:true});
+  checkVisible();
+ }
  document.body.classList.add("animate-in");
- if(!immediate)requestAnimationFrame(()=>requestAnimationFrame(()=>entering.forEach(el=>el.classList.add("seen"))));
- };
- // First screen is visible before cross-document snapshots are taken.
- watchReveals(true);
  const motionSelector="main img:not(.site-logo img),.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
  let motionItems=[...document.querySelectorAll(motionSelector)];
  let motionFrame=false;
