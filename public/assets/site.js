@@ -27,7 +27,7 @@
   ".site-footer .foot-grid > *", ".site-footer .foot-bottom"
  ].join(",");
  const items=[...document.querySelectorAll(selector)];
- const firstEntrance=!document.body.classList.contains("animate-in"),entering=[];
+ const entering=[];
  if(!revealObserver)revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
   const el=entry.target,box=entry.boundingClientRect;
   if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting")||document.documentElement.classList.contains("swipe-committing"))return;
@@ -58,7 +58,7 @@
   revealObserver.observe(el);
  });
  document.body.classList.add("animate-in");
- if(firstEntrance)requestAnimationFrame(()=>requestAnimationFrame(()=>entering.forEach(el=>el.classList.add("seen"))));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>entering.forEach(el=>el.classList.add("seen"))));
  };
  watchReveals();
  document.addEventListener("raps:route-loaded",watchReveals);
@@ -147,7 +147,8 @@
  };
  const getPage=path=>{
   const key=pageURL(path);if(cache.has(key))return cache.get(key);
-  const request=fetch(key,{credentials:"same-origin",cache:"force-cache"}).then(async response=>{if(!response.ok)throw new Error(`Page ${response.status}: ${key}`);const doc=new DOMParser().parseFromString(await response.text(),"text/html");warmStyles(doc);return doc}).catch(error=>{cache.delete(key);throw error});
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),3500);
+  const request=fetch(key,{credentials:"same-origin",cache:"force-cache",signal:controller.signal}).then(async response=>{if(!response.ok)throw new Error(`Page ${response.status}: ${key}`);const doc=new DOMParser().parseFromString(await response.text(),"text/html");warmStyles(doc);return doc}).catch(error=>{cache.delete(key);throw error}).finally(()=>clearTimeout(timeout));
   cache.set(key,request);return request;
  };
  const previewDirection=path=>routes.indexOf(pageURL(path))>=index?"next":"previous";
@@ -158,7 +159,8 @@
   let base=preview.querySelector("base");if(!base){base=preview.createElement("base");preview.head.prepend(base)}base.href=location.origin+"/";
   const direction=previewDirection(key),frame=preview.createElement("iframe");frame.setAttribute("aria-hidden","true");frame.title="";frame.tabIndex=-1;frame.dataset.routePreview=key;
   Object.assign(frame.style,{position:"fixed",zIndex:"10000",top:"0",left:"0",width:"100vw",height:"100vh",border:"0",pointerEvents:"none",background:"var(--surface-page,#fff)",willChange:"transform",transform:direction==="next"?"translate3d(100vw,0,0)":"translate3d(-100vw,0,0)",visibility:"hidden",transition:"none"});if(CSS.supports("height:100dvh"))frame.style.height="100dvh";
-  const entry={frame,direction,ready:new Promise(resolve=>frame.addEventListener("load",()=>{frame.dataset.ready="true";resolve(frame)},{once:true}))};
+  const loaded=new Promise(resolve=>frame.addEventListener("load",()=>{frame.dataset.ready="true";resolve(frame)},{once:true}));
+  const entry={frame,direction,ready:Promise.race([loaded,new Promise(resolve=>setTimeout(()=>resolve(frame),900))])};
   frame.srcdoc="<!doctype html>"+preview.documentElement.outerHTML;root.append(frame);previewFrames.set(key,entry);return entry;
  };
  const prewarmAdjacent=()=>{
@@ -198,7 +200,7 @@
   if(changing)return;const path=normalize(target),nextRoutes=routesFor(path),nextIndex=nextRoutes.indexOf(path);if(nextIndex<0)return;
   changing=true;start=null;
   let doc;
-  try{const cachedDoc=await getPage(path);doc=cachedDoc.cloneNode(true)}catch{changing=false;root.classList.remove("swipe-tracking");location.assign(target);return}
+  try{const cachedDoc=await getPage(path);doc=cachedDoc.cloneNode(true)}catch{changing=false;body.removeAttribute("style");root.classList.remove("swipe-tracking","swipe-committing","route-fallback");delete root.dataset.swipeDir;location.assign(target);return}
   root.classList.remove("swipe-tracking");
   const incomingBody=doc.body,scriptURLs=[...incomingBody.querySelectorAll("script[src]")].map(script=>script.getAttribute("src")).filter(src=>src&&!/\/assets\/(site|experience|international)\.js(?:\?|$)/.test(src));
   incomingBody.querySelectorAll("script").forEach(script=>script.remove());
@@ -216,19 +218,32 @@
   };
   const animateFallback=async()=>{
    let entry=previewFrames.get(path);if(gestureFrame)entry={frame:gestureFrame,direction};if(!entry)entry=preparePreview(path,doc);
-  const frame=entry.frame,curve="transform 240ms cubic-bezier(.32,.72,0,1)";if(frame.dataset.ready!=="true")await entry.ready;frame.contentDocument?.documentElement?.setAttribute("data-theme",root.dataset.theme||"light");root.classList.add("route-fallback","swipe-committing");frame.style.visibility="visible";frame.style.transition="none";
+  const frame=entry.frame,curve="transform 210ms cubic-bezier(.32,.72,0,1)";
+   if(frame.dataset.ready!=="true")await Promise.race([entry.ready,new Promise(resolve=>setTimeout(resolve,180))]);
+   if(frame.dataset.ready!=="true"){
+    frame.remove();previewFrames.delete(path);commit();
+    document.querySelectorAll(".reveal,.scroll-reveal").forEach(el=>{const rect=el.getBoundingClientRect();if(rect.bottom>0&&rect.top<innerHeight)el.classList.add("seen")});
+    return;
+   }
+   frame.contentDocument?.documentElement?.setAttribute("data-theme",root.dataset.theme||"light");root.classList.add("route-fallback","swipe-committing");frame.style.visibility="visible";frame.style.transition="none";
    if(frame!==gestureFrame)frame.style.transform=direction==="next"?"translate3d(100vw,0,0)":"translate3d(-100vw,0,0)";
    void frame.offsetWidth;body.style.transition=curve;frame.style.transition=curve;
    body.style.transform=direction==="next"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)";frame.style.transform="translate3d(0,0,0)";
-   await new Promise(resolve=>{let done=false;const finish=event=>{if(event&&event.target!==frame)return;if(event&&event.propertyName!=="transform")return;if(done)return;done=true;frame.removeEventListener("transitionend",finish);clearTimeout(timeout);resolve()};const timeout=setTimeout(()=>finish(),280);frame.addEventListener("transitionend",finish)});
+   await new Promise(resolve=>{let done=false;const finish=event=>{if(event&&event.target!==frame)return;if(event&&event.propertyName!=="transform")return;if(done)return;done=true;frame.removeEventListener("transitionend",finish);clearTimeout(timeout);resolve()};const timeout=setTimeout(()=>finish(),250);frame.addEventListener("transitionend",finish)});
    commit();
    document.querySelectorAll(".reveal,.scroll-reveal").forEach(el=>{const rect=el.getBoundingClientRect();if(rect.bottom>0&&rect.top<innerHeight)el.classList.add("seen")});
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
    frame.remove();previewFrames.delete(path);root.classList.remove("swipe-committing");
   };
-  if(!reduced)await animateFallback();else commit();
-  activateStyles(doc,true);body.removeAttribute("style");root.classList.remove("route-fallback");delete root.dataset.routeDirection;changing=false;
-  prewarmAdjacent();
+  try{
+   if(!reduced)await animateFallback();else commit();
+  }catch(error){
+   console.warn("RAPS route transition recovered",error);if(!committed)commit();
+  }finally{
+   activateStyles(doc,true);body.removeAttribute("style");root.classList.remove("swipe-tracking","swipe-committing","route-fallback");delete root.dataset.routeDirection;delete root.dataset.swipeDir;changing=false;
+   previewFrames.forEach((entry,key)=>{if(!entry.frame.isConnected){previewFrames.delete(key);return}entry.frame.style.transition="none";entry.frame.style.visibility="hidden";entry.frame.style.transform=entry.direction==="previous"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)"});
+   prewarmAdjacent();
+  }
   const hash=new URL(target,location.href).hash;if(hash)setTimeout(()=>document.querySelector(hash)?.scrollIntoView({behavior:reduced?"instant":"smooth",block:"start"}),250);
  };
  window.rapsSoftNavigate=softNavigate;
@@ -264,7 +279,7 @@
  };
  const beginGesture=(id,x,y,target)=>{if(changing||document.querySelector("dialog[open]")||target?.closest?.(ignore)){start=null;return}const w=width();if(x<18||x>w-18){start=null;return}start={id,x,y,lastX:x,lastTime:performance.now(),velocity:0,horizontal:false,dx:0};gestureId++};
  const moveGesture=(id,x,y,event)=>{if(!start||id!==start.id||changing)return;const dx=x-start.x,dy=y-start.y,now=performance.now(),elapsed=Math.max(1,now-start.lastTime);start.velocity=(x-start.lastX)/elapsed;start.lastX=x;start.lastTime=now;start.dx=dx;if(!start.horizontal){if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)*1.08){start=null;return}if(Math.abs(dx)<5||Math.abs(dx)<Math.abs(dy)*1.08)return;start.horizontal=true}event.preventDefault();const direction=dx<0?"next":"previous",step=direction==="next"?1:-1,target=routes[index+step];root.classList.add("swipe-tracking");body.style.transition="none";if(!target){body.style.transform=`translate3d(${dx*.18}px,0,0)`;return}start.direction=direction;start.target=pageURL(target);root.classList.add("route-fallback");root.dataset.swipeDir=direction;body.style.transform=`translate3d(${dx}px,0,0)`;if(swipeFrame&&swipeTarget!==start.target){const old=swipeFrame,oldEntry=previewFrames.get(swipeTarget);old.style.transition="none";old.style.visibility="hidden";old.style.transform=oldEntry?.direction==="previous"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)";swipeFrame=null;swipeTarget=null}const entry=previewFrames.get(start.target);if(entry?.frame.dataset.ready==="true"&&!swipeFrame)showSwipeFrame(target,direction,dx);if(!swipeFrame){const thisGesture=gestureId;void getPage(target).then(doc=>preparePreview(target,doc).ready).then(()=>{if(start&&start.horizontal&&gestureId===thisGesture&&start.target===pageURL(target))showSwipeFrame(target,direction,start.dx)}).catch(()=>{});return}swipeFrame.style.transition="none";swipeFrame.style.visibility="visible";swipeFrame.style.transform=`translate3d(${(direction==="next"?width():-width())+dx}px,0,0)`};
- const endGesture=(id,x,y)=>{if(!start||id!==start.id){settleSwipe();return}const gesture=start,dx=x-gesture.x,dy=y-gesture.y,direction=dx<0?"next":"previous",target=routes[index+(direction==="next"?1:-1)],distanceEnough=Math.abs(dx)>=Math.min(72,width()*.18),fastFlick=Math.abs(gesture.velocity)>.45&&Math.sign(gesture.velocity)===Math.sign(dx),complete=gesture.horizontal&&target&&Math.abs(dx)>Math.abs(dy)*1.08&&(distanceEnough||fastFlick);if(!complete){settleSwipe();start=null;return}start=null;const frame=swipeFrame&&swipeTarget===pageURL(target)?swipeFrame:null;swipeFrame=null;swipeTarget=null;swipeDirection=null;void softNavigate(target,direction,true,frame)};
+ const endGesture=(id,x,y)=>{if(!start||id!==start.id){settleSwipe();return}const gesture=start,dx=x-gesture.x,dy=y-gesture.y,direction=dx<0?"next":"previous",target=routes[index+(direction==="next"?1:-1)],distanceEnough=Math.abs(dx)>=Math.min(72,width()*.18),fastFlick=Math.abs(gesture.velocity)>.45&&Math.sign(gesture.velocity)===Math.sign(dx),complete=gesture.horizontal&&target&&Math.abs(dx)>Math.abs(dy)*1.08&&(distanceEnough||fastFlick);if(!complete){settleSwipe();start=null;return}start=null;const frame=swipeFrame&&swipeTarget===pageURL(target)&&swipeFrame.dataset.ready==="true"?swipeFrame:null;swipeFrame=null;swipeTarget=null;swipeDirection=null;if(!frame)resetSwipe();void softNavigate(target,direction,true,frame)};
  document.addEventListener("touchstart",event=>{if(event.touches.length!==1){start=null;return}const point=event.touches[0];beginGesture("touch",point.clientX,point.clientY,event.target)},{passive:true});
  document.addEventListener("touchmove",event=>{if(event.touches.length!==1)return;const point=event.touches[0];moveGesture("touch",point.clientX,point.clientY,event)},{passive:false});
  document.addEventListener("touchend",event=>{if(event.changedTouches.length!==1){settleSwipe();start=null;return}const point=event.changedTouches[0];endGesture("touch",point.clientX,point.clientY)},{passive:true});
