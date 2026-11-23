@@ -30,6 +30,9 @@
  const entering=[];
  if(!revealObserver)revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
   const el=entry.target,box=entry.boundingClientRect;
+  // These elements were visible during the page swipe. Never hide them again
+  // because an observer delivered a stale offscreen entry after the swap.
+  if(el.dataset.rapsInstant==="true"){el.classList.add("seen");return}
   if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting")||document.documentElement.classList.contains("swipe-committing")||document.documentElement.classList.contains("raps-route-swiping"))return;
   if(entry.isIntersecting){
    const fromBottom=box.top>innerHeight*.52;
@@ -53,8 +56,11 @@
   el.style.setProperty("--reveal-axis",order%2?"y":"x");
   el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*16}ms`);
   const rect=el.getBoundingClientRect(),visible=rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98;
-  // First-viewport text was already on screen during swipe; never hide it again.
-  if(!immediate||!visible)el.classList.remove("seen");
+  // Keep content that was visible on the incoming screen permanently painted.
+  // Lower sections still use exactly the existing scroll animation.
+  if(immediate&&(visible||el.dataset.rapsInstant==="true"))el.dataset.rapsInstant="true";
+  if(el.dataset.rapsInstant==="true")el.classList.add("seen");
+  else el.classList.remove("seen");
   if(visible){
    entering.push(el);
    if(immediate){
@@ -137,7 +143,7 @@
  if(index<0)return;
  let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
  const cache=new Map(),preloads=new Map(),previewFrames=new Map();
- const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="/* Incoming pane already contains rendered text; preserve that paint on commit. */\nhtml.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate;overflow-anchor:none!important}\n.raps-route-native-preview .reveal,.raps-route-native-preview .scroll-reveal,\nhtml.raps-route-arriving .reveal,html.raps-route-arriving .scroll-reveal{\n opacity:1!important;translate:none!important;scale:1!important;rotate:none!important;\n transform:none!important;filter:none!important;transition:none!important;\n transition-delay:0ms!important;animation:none!important\n}\n.raps-route-native-preview main img,.raps-route-native-preview .hero-art-halo,\n.raps-route-native-preview .service-hero-art,.raps-route-native-preview .project-detail-art,\n.raps-route-native-preview .raps-web-shot-browser,.raps-route-native-preview .portfolio-preview{\n translate:none!important;scale:1!important;rotate:none!important\n}";document.head.append(swipeStyle);
+ const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="/* Swipe-only text visibility. Never modify ordinary scroll reveals. */\nhtml.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate;overflow-anchor:none!important}\n.raps-route-native-preview .reveal,.raps-route-native-preview .scroll-reveal,\nhtml.raps-route-arriving .reveal,html.raps-route-arriving .scroll-reveal,\n[data-raps-instant=\"true\"].reveal,[data-raps-instant=\"true\"].scroll-reveal{\n opacity:1!important;translate:none!important;scale:1!important;rotate:none!important;\n transform:none!important;filter:none!important;transition:none!important;\n transition-delay:0ms!important;animation:none!important\n}\n.raps-route-native-preview main img,.raps-route-native-preview .hero-art-halo,\n.raps-route-native-preview .service-hero-art,.raps-route-native-preview .project-detail-art,\n.raps-route-native-preview .raps-web-shot-browser,.raps-route-native-preview .portfolio-preview{\n translate:none!important;scale:1!important;rotate:none!important\n}";document.head.append(swipeStyle);
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
@@ -196,6 +202,16 @@
    transform:direction==="next"?"translate3d(100vw,0,0)":"translate3d(-100vw,0,0)"});
   if(CSS.supports("height:100dvh"))pane.style.height="100dvh";
   root.append(pane);
+  // Prepare text visibility on the actual incoming DOM BEFORE it starts sliding.
+  // These attributes survive the preview-to-body clone, preventing a second fade.
+  const initialTargets=".reveal,.service-tile,.story-card,.price-card,.faq,.project-detail,.promo-note,.feature-banner-inner,.service-finale-inner,.last-cta-inner,.section-heading,.rc-head,.rc-card,.rc-addon-row,.bundle-card,.bundle-option,.about-grid > *,.story-lede,.raps-web-work-heading,.raps-web-shot-card,.raps-web-work-card,.website-feature,.pricing-grid > *,.pricing-cards > *,.portfolio-list > *,.last-cta-inner > * ,main section article,.portfolio-preview";
+  pane.querySelectorAll(initialTargets).forEach(el=>{
+   const rect=el.getBoundingClientRect();
+   if(rect.bottom>0&&rect.top<innerHeight*1.03){
+    el.dataset.rapsInstant="true";
+    el.classList.add("seen");
+   }
+  });
   const css=routeStylesFor(doc).map(href=>{
    const link=[...document.querySelectorAll('link[rel="stylesheet"]')].find(el=>el.href===href);
    if(!link||link.sheet)return Promise.resolve();
