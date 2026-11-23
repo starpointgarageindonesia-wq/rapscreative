@@ -13,76 +13,14 @@
  let frame=false;
  const sync=()=>{let d=Math.max(1,document.documentElement.scrollHeight-innerHeight),indicator=document.getElementById("scroll-indicator");if(indicator)indicator.style.width=Math.min(100,Math.max(0,scrollY/d*100))+"%";frame=false};
  addEventListener("scroll",()=>{if(!frame){frame=true;requestAnimationFrame(sync)}},{passive:true});addEventListener("resize",sync,{passive:true});sync();
- const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
- let revealObserver=null;
- const watchReveals=()=>{
- if(reduced||!("IntersectionObserver" in window))return;
- const selector=[
-  ".reveal", ".service-tile", ".story-card", ".price-card", ".faq", ".project-detail",
-  ".promo-note", ".feature-banner-inner", ".service-finale-inner", ".last-cta-inner",
-  ".section-heading", ".rc-head", ".rc-card", ".rc-addon-row", ".bundle-card", ".bundle-option",
-  ".about-grid > *", ".story-lede", ".raps-web-work-heading", ".raps-web-shot-card",
-  ".raps-web-work-card", ".website-feature", ".pricing-grid > *", ".pricing-cards > *",
-  ".portfolio-list > *", ".last-cta-inner > *", "main section article", ".portfolio-preview",
-  ".site-footer .foot-grid > *", ".site-footer .foot-bottom"
- ].join(",");
- const items=[...document.querySelectorAll(selector)];
- const entering=[];
- if(!revealObserver)revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
-  const el=entry.target,box=entry.boundingClientRect;
-  if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting")||document.documentElement.classList.contains("swipe-committing"))return;
-  if(entry.isIntersecting){
-   const fromBottom=box.top>innerHeight*.52;
-   el.style.setProperty("--reveal-y",fromBottom?"82px":"-82px");
-   el.style.setProperty("--reveal-angle",fromBottom?"7deg":"-7deg");
-   el.classList.add("seen");
-  }else{
-   const above=box.bottom<0;
-   el.style.setProperty("--reveal-y",above?"-82px":"82px");
-   el.style.setProperty("--reveal-angle",above?"-7deg":"7deg");
-   el.classList.remove("seen");
-  }
- }),{threshold:.06,rootMargin:"-2% 0px -2% 0px"});
- revealObserver.disconnect();
- const orderByParent=new Map();
- items.forEach(el=>{
-  if(!el.classList.contains("reveal"))el.classList.add("scroll-reveal");
-  const parent=el.parentElement,order=orderByParent.get(parent)||0;
-  orderByParent.set(parent,order+1);
-  el.style.setProperty("--reveal-x",order%2?"44px":"-44px");
-  el.style.setProperty("--reveal-axis",order%2?"y":"x");
-  el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*16}ms`);
-  const rect=el.getBoundingClientRect();
-  el.classList.remove("seen");
-  if(rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98)entering.push(el);
-  revealObserver.observe(el);
- });
- document.body.classList.add("animate-in");
- requestAnimationFrame(()=>requestAnimationFrame(()=>entering.forEach(el=>el.classList.add("seen"))));
+ // Keep typography and hero images static. Do not re-trigger zoom, rotate,
+ // fade, or stagger animations when swiping or arriving on a new page.
+ const showContent=()=>{
+  document.body.classList.remove("animate-in");
+  document.querySelectorAll(".reveal,.scroll-reveal").forEach(el=>el.classList.add("seen"));
  };
- watchReveals();
- document.addEventListener("raps:route-loaded",watchReveals);
- const motionSelector="main img:not(.site-logo img),.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
- let motionItems=[...document.querySelectorAll(motionSelector)];
- let motionFrame=false;
- const syncScrollMotion=()=>{
-  if(reduced){motionFrame=false;return}
-  const center=innerHeight*.5,span=Math.max(innerHeight*.85,1);
-  const measured=motionItems.map(el=>({el,rect:el.getBoundingClientRect()}));
-  measured.forEach(({el,rect})=>{
-   if(el.tagName==="IMG"&&rect.width<100&&rect.height<64){el.style.willChange="";return}
-   if(rect.bottom< -80||rect.top>innerHeight+80){el.style.willChange="";return}
-   const delta=(rect.top+rect.height*.5-center)/span,depth=Math.max(0,1-Math.min(1,Math.abs(delta)));
-   el.style.willChange="translate,scale";
-   el.style.setProperty("--motion-y",`${(-delta*72).toFixed(1)}px`);
-   el.style.setProperty("--motion-scale",(0.88+depth*.34).toFixed(3));
-   el.style.setProperty("--motion-angle",`${(-delta*3.5).toFixed(2)}deg`);
-  });
-  motionFrame=false;
- };
- const requestScrollMotion=()=>{if(!motionFrame){motionFrame=true;requestAnimationFrame(syncScrollMotion)}};
- addEventListener("scroll",requestScrollMotion,{passive:true});addEventListener("resize",requestScrollMotion,{passive:true});
- document.addEventListener("raps:route-loaded",()=>{motionItems=[...document.querySelectorAll(motionSelector)];requestScrollMotion()});requestScrollMotion();
+ showContent();
+ document.addEventListener("raps:route-loaded",showContent);
  const dialog=document.getElementById("benefit-dialog");
  if(dialog){
  const p=[];
@@ -130,7 +68,7 @@
  if(index<0)return;
  let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
  const cache=new Map(),preloads=new Map(),previewFrames=new Map();
- const swipeStyle=document.createElement('style');swipeStyle.id='raps-native-swipe-style';swipeStyle.textContent="html.raps-route-swiping{overflow-x:clip!important}\nhtml.raps-route-swiping body{backface-visibility:hidden;-webkit-backface-visibility:hidden}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate}\nhtml.raps-route-swiping .reveal,html.raps-route-swiping .scroll-reveal{opacity:1!important;transform:none!important;translate:none!important;scale:1!important;rotate:none!important;filter:none!important;transition:none!important;animation:none!important}";document.head.append(swipeStyle);
+ const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="body.animate-in .reveal,body.animate-in .scroll-reveal,.reveal,.scroll-reveal{\n opacity:1!important;translate:none!important;scale:none!important;rotate:none!important;\n filter:none!important;transition:none!important;transition-delay:0ms!important;animation:none!important\n}\nbody.animate-in main img,body.animate-in .hero-art-halo,\nbody.animate-in .service-hero-art,body.animate-in .project-detail-art,\nbody.animate-in .raps-web-shot-browser,body.animate-in .portfolio-preview{\n translate:none!important;scale:none!important;rotate:none!important\n}\nhtml.raps-route-swiping{overflow-x:clip!important}\nhtml.raps-route-swiping body{backface-visibility:hidden;-webkit-backface-visibility:hidden}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate}\n.tap-pop{animation:none!important;transform:none!important}";document.head.append(swipeStyle);
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
@@ -250,17 +188,17 @@
    history.scrollRestoration="manual";
    body.className=incomingBody.className;
    if(visualPreview?.dataset.ready==="true"&&visualPreview.isConnected){
+    // The source preview stays visually complete while destination lays out.
+    // Cloning, instead of moving child nodes, removes the blank-frame flash.
     const fragment=document.createDocumentFragment();
-    while(visualPreview.firstChild)fragment.append(visualPreview.firstChild);
+    [...visualPreview.childNodes].forEach(node=>fragment.append(node.cloneNode(true)));
     body.replaceChildren(fragment);
-    // Never expose the empty opaque preview for even one animation frame.
-    visualPreview.style.visibility="hidden";
    }else body.innerHTML=incomingBody.innerHTML;
    body.style.transition="none";body.style.transform="none";
    updateHead(doc);if(push)history.pushState({rapsSoft:true},"",target);
    routes=routesFor(location.pathname);labels=labelsFor(location.pathname.startsWith("/en/"));currentPath=normalize(location.pathname);index=routes.indexOf(currentPath);
    window.scrollTo(0,0);syncServiceNav();buildGuide();syncLanguageAndTheme();softControlsActive=true;
-   body.classList.add("animate-in");document.dispatchEvent(new CustomEvent("raps:route-loaded"));
+   body.classList.remove("animate-in");document.dispatchEvent(new CustomEvent("raps:route-loaded"));
    scriptURLs.forEach(src=>{const script=document.createElement("script");script.src=new URL(src,location.origin).href;script.async=false;body.append(script)});
   };
   const animateFallback=async()=>{
@@ -325,7 +263,7 @@
   const entry=previewFrames.get(pageURL(target));if(!entry||entry.frame.dataset.ready!=="true")return false;
   const frame=entry.frame;swipeFrame=frame;swipeTarget=pageURL(target);swipeDirection=direction;frame.style.transition="none";frame.style.visibility="visible";frame.style.transform=`translate3d(${(direction==="next"?width():-width())+dx}px,0,0)`;return true;
  };
- const beginGesture=(id,x,y,target)=>{clearTimeout(settleTimer);settleTimer=null;if(changing||document.querySelector("dialog[open]")||target?.closest?.(ignore)){start=null;return}const w=width();if(x<18||x>w-18){start=null;return}start={id,x,y,lastX:x,lastTime:performance.now(),velocity:0,horizontal:false,dx:0};gestureId++};
+ const beginGesture=(id,x,y,target)=>{if(changing||document.querySelector("dialog[open]")||target?.closest?.(ignore)){start=null;return}if(settleTimer)resetSwipe();const w=width();if(x<18||x>w-18){start=null;return}start={id,x,y,lastX:x,lastTime:performance.now(),velocity:0,horizontal:false,dx:0};gestureId++};
  const moveGesture=(id,x,y,event)=>{if(!start||id!==start.id||changing)return;const dx=x-start.x,dy=y-start.y,now=performance.now(),elapsed=Math.max(1,now-start.lastTime);start.velocity=(x-start.lastX)/elapsed;start.lastX=x;start.lastTime=now;start.dx=dx;if(!start.horizontal){if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)*1.08){start=null;return}if(Math.abs(dx)<5||Math.abs(dx)<Math.abs(dy)*1.08)return;start.horizontal=true}event.preventDefault();const direction=dx<0?"next":"previous",step=direction==="next"?1:-1,target=routes[index+step];if(!target){root.classList.add("swipe-tracking");body.style.transition="none";body.style.transform=`translate3d(${dx*.12}px,0,0)`;return}start.direction=direction;start.target=pageURL(target);const entry=previewFrames.get(start.target);if(entry?.frame.dataset.ready!=="true"){void getPage(target).then(doc=>preparePreview(target,doc).ready).catch(()=>{});return}root.classList.add("swipe-tracking","route-fallback","raps-route-swiping");root.dataset.swipeDir=direction;body.style.transition="none";body.style.transform=`translate3d(${dx}px,0,0)`;if(swipeFrame&&swipeTarget!==start.target){const old=swipeFrame,oldEntry=previewFrames.get(swipeTarget);old.style.transition="none";old.style.visibility="hidden";old.style.transform=oldEntry?.direction==="previous"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)";swipeFrame=null;swipeTarget=null}if(!swipeFrame)showSwipeFrame(target,direction,dx);swipeFrame.style.transition="none";swipeFrame.style.visibility="visible";swipeFrame.style.transform=`translate3d(${(direction==="next"?width():-width())+dx}px,0,0)`};
  const endGesture=(id,x,y)=>{if(!start||id!==start.id){settleSwipe();return}const gesture=start,dx=x-gesture.x,dy=y-gesture.y,direction=dx<0?"next":"previous",target=routes[index+(direction==="next"?1:-1)],distanceEnough=Math.abs(dx)>=Math.min(72,width()*.18),fastFlick=Math.abs(gesture.velocity)>.45&&Math.sign(gesture.velocity)===Math.sign(dx),complete=gesture.horizontal&&target&&Math.abs(dx)>Math.abs(dy)*1.08&&(distanceEnough||fastFlick);if(!complete){settleSwipe();start=null;return}start=null;const frame=swipeFrame&&swipeTarget===pageURL(target)&&swipeFrame.dataset.ready==="true"?swipeFrame:null;swipeFrame=null;swipeTarget=null;swipeDirection=null;if(!frame)resetSwipe();void softNavigate(target,direction,true,frame)};
  document.addEventListener("touchstart",event=>{if(event.touches.length!==1){start=null;return}const point=event.touches[0];beginGesture("touch",point.clientX,point.clientY,event.target)},{passive:true});
