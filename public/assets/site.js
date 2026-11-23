@@ -28,7 +28,7 @@
  const originalTargets=[...document.querySelectorAll(revealSelector)];
  // Never animate a photographic wrapper, because that would move its image.
  // Restore scroll animations on the TEXT inside those wrappers instead.
- const mediaSelector='img:not(.brand-icon):not([aria-hidden="true"]),picture,video';
+ const mediaSelector='img:not(.brand-icon),picture,video';
  const textSelector=[
   "h1","h2","h3","h4","p","figcaption",".eyebrow",".service-hero-copy",
   ".project-detail-copy",".section-heading",".story-lede",".rc-card-overline",
@@ -36,7 +36,7 @@
   ".raps-web-shot-placeholder",".preview-headline",".preview-top",
   ".service-chip-row",".button-row",".tile-type",".tile-bottom"
  ].join(",");
- const photoOnly='img,picture,video,figure,.hero-shot,.hero-art,.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview,.portfolio-stack';
+ const photoOnly='img,picture,video,.hero-shot,.hero-art,.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-stack';
  const targets=new Set();
  for(const el of originalTargets){
   if(el.matches(photoOnly))continue;
