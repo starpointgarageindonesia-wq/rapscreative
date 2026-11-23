@@ -131,7 +131,7 @@ body{background:var(--surface-page)}
 /* Strong, repeatable scroll reveals with direction, depth, and a short stagger. */
 @media(prefers-reduced-motion:no-preference){
  body.animate-in .reveal,body.animate-in .scroll-reveal{
-  transition:opacity .42s ease,translate .68s cubic-bezier(.18,1.2,.3,1),scale .68s cubic-bezier(.18,1.2,.3,1),rotate .68s cubic-bezier(.18,1.2,.3,1),filter .52s ease;
+  transition:opacity .22s ease,translate .34s cubic-bezier(.2,1.05,.3,1),scale .34s cubic-bezier(.2,1.05,.3,1),rotate .34s cubic-bezier(.2,1.05,.3,1),filter .22s ease;
   transition-delay:var(--reveal-stagger,0ms);transform-origin:center
  }
  body.animate-in .reveal{transform:none}

@@ -8,7 +8,7 @@
  document.querySelectorAll("[data-theme-toggle]").forEach(btn=>btn.addEventListener("click",()=>theme(root.dataset.theme==="dark"?"light":"dark")));
  document.querySelectorAll("[data-lang-choice]").forEach(btn=>btn.addEventListener("click",()=>{
  const choice=btn.dataset.langChoice==="id"?"id":"en";save("raps-language",choice);
- if(choice==="id")window.location.assign(btn.dataset.idPath||"/");
+ if(choice==="id"){const target=btn.dataset.idPath||"/";if(window.rapsSoftNavigate)void window.rapsSoftNavigate(target,"previous");else window.location.assign(target)}
  }));
  root.lang="en";save("raps-language","en");theme(get("raps-theme","light"));
  addEventListener("pageshow",()=>theme(get("raps-theme","light")));
