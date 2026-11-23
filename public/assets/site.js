@@ -48,6 +48,8 @@
   // Above-the-fold content stays in the native cross-document swipe snapshot.
   for(const el of elements){
    const rect=el.getBoundingClientRect();
+   // Do not animate photo containers: moving their ancestor moves the photo.
+   if(el.matches("img,picture,video,figure,.hero-shot,.hero-art,.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-card,.raps-web-work-card,.raps-web-shot-browser,.portfolio-preview,.portfolio-stack")||el.querySelector("img,picture,video"))continue;
    if(rect.top<=innerHeight+100||rect.bottom<=0)continue;
    el.classList.add("raps-scroll-pending");
    pending.add(el);
@@ -70,27 +72,8 @@
   checkVisible();
  }
  document.body.classList.add("animate-in");
- const motionSelector="main img:not(.site-logo img),.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
- let motionItems=[...document.querySelectorAll(motionSelector)];
- let motionFrame=false;
- const syncScrollMotion=()=>{
-  if(reduced||document.documentElement.classList.contains("raps-route-swiping")){motionFrame=false;return}
-  const center=innerHeight*.5,span=Math.max(innerHeight*.85,1);
-  const measured=motionItems.map(el=>({el,rect:el.getBoundingClientRect()}));
-  measured.forEach(({el,rect})=>{
-   if(el.tagName==="IMG"&&rect.width<100&&rect.height<64){el.style.willChange="";return}
-   if(rect.bottom< -80||rect.top>innerHeight+80){el.style.willChange="";return}
-   const delta=(rect.top+rect.height*.5-center)/span,depth=Math.max(0,1-Math.min(1,Math.abs(delta)));
-   el.style.willChange="translate,scale";
-   el.style.setProperty("--motion-y",`${(-delta*72).toFixed(1)}px`);
-   el.style.setProperty("--motion-scale",(0.88+depth*.34).toFixed(3));
-   el.style.setProperty("--motion-angle",`${(-delta*3.5).toFixed(2)}deg`);
-  });
-  motionFrame=false;
- };
- const requestScrollMotion=()=>{if(!motionFrame){motionFrame=true;requestAnimationFrame(syncScrollMotion)}};
- addEventListener("scroll",requestScrollMotion,{passive:true});addEventListener("resize",requestScrollMotion,{passive:true});
- document.addEventListener("raps:route-loaded",()=>{motionItems=[...document.querySelectorAll(motionSelector)];requestScrollMotion()});requestScrollMotion();
+ // Images and image-bearing artwork stay static while the document scrolls.
+ // Keep the text IntersectionObserver and its scroll reveal independently.
  const dialog=document.getElementById("benefit-dialog");
  if(dialog){
  const p=[];
