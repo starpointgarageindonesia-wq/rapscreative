@@ -128,18 +128,17 @@ body{background:var(--surface-page)}
 .portfolio-triptych{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:420px;padding:24px 0}
 .portfolio-preview{display:block;color:white!important;text-decoration:none!important;border:6px solid #14283f;border-radius:18px;aspect-ratio:3/4;overflow:hidden;box-shadow:0 25px 45px #10243c44;transition:transform .25s ease;min-width:0}
 
-/* On-scroll reveal: visible on initial screen, subtle fade/slide only below it.
-   Never queue or replay a reveal during native page-to-page swipes. */
+/* Animate text/cards as they enter the viewport. Photographs remain still. */
 @media(prefers-reduced-motion:no-preference){
  body.animate-in .reveal,body.animate-in .scroll-reveal{
   transform:none;
  }
  body.animate-in .raps-scroll-pending{
   opacity:0!important;
-  translate:0 24px!important;
+  translate:0 32px!important;
   scale:1!important;
   rotate:none!important;
-  transition:opacity .28s ease-out,translate .36s cubic-bezier(.2,.7,.2,1)!important;
+  transition:opacity .52s ease-out,translate .52s cubic-bezier(.2,.78,.22,1)!important;
   transition-delay:0ms!important;
  }
  body.animate-in .raps-scroll-pending.raps-scroll-visible{
