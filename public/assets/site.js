@@ -21,6 +21,7 @@
   ".site-footer .foot-grid > *", ".site-footer .foot-bottom"
  ].join(",");
  const items=[...document.querySelectorAll(selector)];
+ const firstEntrance=!document.body.classList.contains("animate-in"),entering=[];
  if(!revealObserver)revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
   const el=entry.target,box=entry.boundingClientRect;
   if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting"))return;
@@ -43,25 +44,28 @@
   el.style.setProperty("--reveal-x",order%2?"30px":"-30px");
   el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*24}ms`);
   const rect=el.getBoundingClientRect();
-  if(rect.bottom>innerHeight*.05&&rect.top<innerHeight*.95)el.classList.add("seen");
-  else el.classList.remove("seen");
+  el.classList.remove("seen");
+  if(rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98)entering.push(el);
   revealObserver.observe(el);
  });
  document.body.classList.add("animate-in");
+ if(firstEntrance)requestAnimationFrame(()=>requestAnimationFrame(()=>entering.forEach(el=>el.classList.add("seen"))));
  };
  watchReveals();
  document.addEventListener("raps:route-loaded",watchReveals);
- const motionSelector=".hero-art-halo,.hero-shot img,.service-hero-art,.portfolio-montage img,.service-visual img,.about-visual-card,.project-detail-art,.raps-web-shot-browser";
+ const motionSelector=".hero-shot img,.portfolio-montage img,.service-visual img,.about-visual-card,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
  let motionItems=[...document.querySelectorAll(motionSelector)];
  let motionFrame=false;
  const syncScrollMotion=()=>{
+  if(reduced){motionFrame=false;return}
   const center=innerHeight*.5,span=Math.max(innerHeight*.85,1);
   const measured=motionItems.map(el=>({el,rect:el.getBoundingClientRect()}));
   measured.forEach(({el,rect})=>{
-   if(rect.bottom< -80||rect.top>innerHeight+80)return;
+   if(rect.bottom< -80||rect.top>innerHeight+80){el.style.willChange="";return}
    const delta=(rect.top+rect.height*.5-center)/span,depth=Math.max(0,1-Math.min(1,Math.abs(delta)));
-   el.style.setProperty("--motion-y",`${(-delta*24).toFixed(1)}px`);
-   el.style.setProperty("--motion-scale",(0.96+depth*.09).toFixed(3));
+   el.style.willChange="translate,scale";
+   el.style.setProperty("--motion-y",`${(-delta*56).toFixed(1)}px`);
+   el.style.setProperty("--motion-scale",(0.9+depth*.28).toFixed(3));
   });
   motionFrame=false;
  };
@@ -112,8 +116,8 @@
  const labelsFor=english=>english?["Home","Website","UGC","Editing","Content","Marketing","Social","Invitation","Bundles","Pricing"]:["Beranda","Website","UGC","Editing","Konten","Marketing","Social Media","Undangan","Bundling","Harga"];
  let routes=routesFor(location.pathname),labels=labelsFor(location.pathname.startsWith("/en/")),currentPath=normalize(location.pathname),index=routes.indexOf(currentPath);
  if(index<0)return;
- let changing=false,start=null,softControlsActive=false;
- const cache=new Map(),preloads=new Map();
+ let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
+ const cache=new Map(),preloads=new Map(),previewFrames=new Map();
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
@@ -126,7 +130,22 @@
   const request=fetch(key,{credentials:"same-origin",cache:"force-cache"}).then(async response=>{if(!response.ok)throw new Error(`Page ${response.status}: ${key}`);const doc=new DOMParser().parseFromString(await response.text(),"text/html");warmStyles(doc);return doc}).catch(error=>{cache.delete(key);throw error});
   cache.set(key,request);return request;
  };
- const prewarmAdjacent=()=>[routes[index-1],routes[index+1]].filter(Boolean).forEach(path=>{void getPage(path).catch(()=>{})});
+ const previewDirection=path=>routes.indexOf(pageURL(path))>=index?"next":"previous";
+ const preparePreview=(path,doc)=>{
+  const key=pageURL(path),existing=previewFrames.get(key);if(existing)return existing;
+  const preview=doc.cloneNode(true);preview.documentElement.dataset.theme=root.dataset.theme||"light";preview.querySelectorAll("script").forEach(script=>script.remove());
+  preview.querySelectorAll("iframe").forEach(frame=>frame.remove());
+  let base=preview.querySelector("base");if(!base){base=preview.createElement("base");preview.head.prepend(base)}base.href=location.origin+"/";
+  const direction=previewDirection(key),frame=preview.createElement("iframe");frame.setAttribute("aria-hidden","true");frame.title="";frame.tabIndex=-1;frame.dataset.routePreview=key;
+  Object.assign(frame.style,{position:"fixed",zIndex:"10000",top:"0",left:"0",width:"100vw",height:"100vh",border:"0",pointerEvents:"none",background:"var(--surface-page,#fff)",willChange:"transform",transform:direction==="next"?"translate3d(100vw,0,0)":"translate3d(-100vw,0,0)",visibility:"hidden",transition:"none"});if(CSS.supports("height:100dvh"))frame.style.height="100dvh";
+  const entry={frame,direction,ready:new Promise(resolve=>frame.addEventListener("load",()=>{frame.dataset.ready="true";resolve(frame)},{once:true}))};
+  frame.srcdoc="<!doctype html>"+preview.documentElement.outerHTML;root.append(frame);previewFrames.set(key,entry);return entry;
+ };
+ const prewarmAdjacent=()=>{
+  const paths=[routes[index-1],routes[index+1]].filter(Boolean).map(pageURL),wanted=new Set(paths);
+  previewFrames.forEach((entry,path)=>{if(!wanted.has(path)){entry.frame.remove();previewFrames.delete(path)}});
+  paths.forEach(path=>{void getPage(path).then(doc=>preparePreview(path,doc).ready).catch(()=>{})});
+ };
  const buildGuide=()=>{
   document.querySelector(".swipe-guide")?.remove();const header=document.querySelector(".site-header");if(!header)return;
   const english=location.pathname.startsWith("/en/"),guide=document.createElement("div");guide.className="swipe-guide";guide.setAttribute("role","note");guide.setAttribute("aria-label",english?"Swipe left or right to see other services":"Geser kiri atau kanan untuk melihat layanan lain");
@@ -155,7 +174,7 @@
   document.querySelectorAll("[data-lang-choice]").forEach(button=>{const active=button.dataset.langChoice===lang;button.setAttribute("aria-pressed",String(active));button.classList.toggle("active",active)});
   const dark=root.dataset.theme==="dark";document.querySelectorAll("[data-theme-toggle]").forEach(button=>{button.setAttribute("aria-pressed",String(dark));button.setAttribute("aria-label",dark?"Switch to light mode":"Switch to dark mode");button.setAttribute("title",dark?"Light mode":"Dark mode")});
  };
- const softNavigate=async(target,direction,push=true)=>{
+ const softNavigate=async(target,direction,push=true,gestureFrame=null)=>{
   if(changing)return;const path=normalize(target),nextRoutes=routesFor(path),nextIndex=nextRoutes.indexOf(path);if(nextIndex<0)return;
   changing=true;start=null;
   let doc;
@@ -176,18 +195,15 @@
    scriptURLs.forEach(src=>{const script=document.createElement("script");script.src=new URL(src,location.origin).href;script.async=false;body.append(script)});
   };
   const animateFallback=async()=>{
-   const preview=doc.cloneNode(true);preview.documentElement.dataset.theme=root.dataset.theme||"light";preview.querySelectorAll("script").forEach(script=>script.remove());
-   let base=preview.querySelector("base");if(!base){base=preview.createElement("base");preview.head.prepend(base)}base.href=location.origin+"/";
-   const frame=document.createElement("iframe");frame.setAttribute("aria-hidden","true");frame.title="";frame.tabIndex=-1;
-   Object.assign(frame.style,{position:"fixed",zIndex:"10000",top:"0",left:"0",width:"100vw",height:"100vh",border:"0",pointerEvents:"none",background:"#fff",willChange:"transform",transform:direction==="next"?"translate3d(100vw,0,0)":"translate3d(-100vw,0,0)"});if(CSS.supports("height:100dvh"))frame.style.height="100dvh";
-   frame.srcdoc="<!doctype html>"+preview.documentElement.outerHTML;root.classList.add("route-fallback");root.append(frame);
-   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-   const curve="transform 340ms cubic-bezier(.22,.7,.18,1)";body.style.transition=curve;frame.style.transition=curve;
+   let entry=previewFrames.get(path);if(gestureFrame)entry={frame:gestureFrame,direction};if(!entry)entry=preparePreview(path,doc);
+  const frame=entry.frame,curve="transform 260ms cubic-bezier(.2,.8,.2,1)";if(frame.dataset.ready!=="true")await entry.ready;frame.contentDocument?.documentElement?.setAttribute("data-theme",root.dataset.theme||"light");root.classList.add("route-fallback");frame.style.visibility="visible";frame.style.transition="none";
+   if(frame!==gestureFrame)frame.style.transform=direction==="next"?"translate3d(100vw,0,0)":"translate3d(-100vw,0,0)";
+   void frame.offsetWidth;body.style.transition=curve;frame.style.transition=curve;
    body.style.transform=direction==="next"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)";frame.style.transform="translate3d(0,0,0)";
-   await new Promise(resolve=>{let done=false;const finish=event=>{if(event&&event.target!==frame)return;if(event&&event.propertyName!=="transform")return;if(done)return;done=true;frame.removeEventListener("transitionend",finish);clearTimeout(timeout);resolve()};const timeout=setTimeout(()=>finish(),390);frame.addEventListener("transitionend",finish)});
-   commit();frame.remove();
+   await new Promise(resolve=>{let done=false;const finish=event=>{if(event&&event.target!==frame)return;if(event&&event.propertyName!=="transform")return;if(done)return;done=true;frame.removeEventListener("transitionend",finish);clearTimeout(timeout);resolve()};const timeout=setTimeout(()=>finish(),300);frame.addEventListener("transitionend",finish)});
+   commit();frame.remove();previewFrames.delete(path);
   };
-  if(!reduced&&typeof document.startViewTransition==="function"){
+  if(!gestureFrame&&!reduced&&typeof document.startViewTransition==="function"){
    try{const transition=document.startViewTransition(commit);await transition.finished}catch{if(!committed)await animateFallback()}
   }else if(!reduced)await animateFallback();else commit();
   activateStyles(doc,true);body.removeAttribute("style");root.classList.remove("route-fallback");delete root.dataset.routeDirection;changing=false;
@@ -218,10 +234,15 @@
  });
  const ignore='button,input,textarea,select,summary,[contenteditable="true"],[role="slider"],[data-no-swipe],.site-header a';
  const width=()=>Math.max(root.clientWidth,320);
- const resetSwipe=()=>{root.classList.remove("swipe-tracking");delete root.dataset.swipeDir;body.style.removeProperty("transition");body.style.removeProperty("transform");body.style.removeProperty("translate");body.style.removeProperty("transform-origin");body.style.removeProperty("opacity")};
- const settleSwipe=()=>{if(!root.classList.contains("swipe-tracking")){start=null;return}body.style.transition="transform 170ms cubic-bezier(.22,.7,.18,1)";body.style.transform="translate3d(0,0,0)";body.addEventListener("transitionend",function done(event){if(event.target!==body||event.propertyName!=="transform")return;body.removeEventListener("transitionend",done);resetSwipe()});setTimeout(resetSwipe,190)};
- document.addEventListener("touchstart",event=>{if(event.touches.length!==1||changing||document.querySelector("dialog[open]")){start=null;return}const t=event.target;if(t?.closest?.(ignore)){start=null;return}const p=event.touches[0],w=width();if(p.clientX<12||p.clientX>w-12){start=null;return}start={x:p.clientX,y:p.clientY,scrollY}},{passive:true});
- document.addEventListener("touchmove",event=>{if(!start||changing||event.touches.length!==1)return;const p=event.touches[0],dx=p.clientX-start.x,dy=p.clientY-start.y;if(!start.horizontal){if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)*1.12){start=null;return}if(Math.abs(dx)<6||Math.abs(dx)<Math.abs(dy)*1.12)return;start.horizontal=true}const direction=dx<0?"next":"previous";if(!routes[index+(direction==="next"?1:-1)])return;if(reduced)return;event.preventDefault();root.classList.add("swipe-tracking");root.dataset.swipeDir=direction;body.style.transition="none";body.style.transform=`translate3d(${Math.max(-36,Math.min(36,dx*.32))}px,0,0)`},{passive:false});
+ const resetSwipe=()=>{root.classList.remove("swipe-tracking","route-fallback");delete root.dataset.swipeDir;body.style.removeProperty("transition");body.style.removeProperty("transform");body.style.removeProperty("translate");body.style.removeProperty("transform-origin");body.style.removeProperty("opacity");if(swipeFrame){const entry=previewFrames.get(swipeTarget),frame=swipeFrame;frame.style.transition="none";frame.style.visibility="hidden";frame.style.transform=entry?.direction==="previous"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)"}swipeFrame=null;swipeTarget=null;swipeDirection=null};
+ const settleSwipe=()=>{if(!root.classList.contains("swipe-tracking")){start=null;return}const frame=swipeFrame,entry=frame&&previewFrames.get(swipeTarget),origin=entry?.direction==="previous"?"-100vw":"100vw";body.style.transition="transform 180ms cubic-bezier(.2,.8,.2,1)";body.style.transform="translate3d(0,0,0)";if(frame){frame.style.transition="transform 180ms cubic-bezier(.2,.8,.2,1)";frame.style.transform=`translate3d(${origin},0,0)`}setTimeout(resetSwipe,190)};
+ let gestureId=0;
+ const showSwipeFrame=(target,direction,dx)=>{
+  const entry=previewFrames.get(pageURL(target));if(!entry||entry.frame.dataset.ready!=="true")return false;
+  const frame=entry.frame;swipeFrame=frame;swipeTarget=pageURL(target);swipeDirection=direction;frame.style.transition="none";frame.style.visibility="visible";frame.style.transform=`translate3d(${(direction==="next"?width():-width())+dx}px,0,0)`;return true;
+ };
+ document.addEventListener("touchstart",event=>{if(event.touches.length!==1||changing||document.querySelector("dialog[open]")){start=null;return}const t=event.target;if(t?.closest?.(ignore)){start=null;return}const p=event.touches[0],w=width();if(p.clientX<12||p.clientX>w-12){start=null;return}start={x:p.clientX,y:p.clientY,scrollY,horizontal:false,dx:0};gestureId++},{passive:true});
+ document.addEventListener("touchmove",event=>{if(!start||changing||event.touches.length!==1)return;const p=event.touches[0],dx=p.clientX-start.x,dy=p.clientY-start.y;if(!start.horizontal){if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)*1.12){start=null;return}if(Math.abs(dx)<6||Math.abs(dx)<Math.abs(dy)*1.12)return;start.horizontal=true}const direction=dx<0?"next":"previous",step=direction==="next"?1:-1,target=routes[index+step];if(!target)return;if(reduced)return;event.preventDefault();start.direction=direction;start.target=pageURL(target);start.dx=dx;root.classList.add("swipe-tracking","route-fallback");root.dataset.swipeDir=direction;body.style.transition="none";body.style.transform=`translate3d(${dx}px,0,0)`;if(swipeFrame&&swipeTarget!==start.target){const old=swipeFrame,oldEntry=previewFrames.get(swipeTarget);old.style.transition="none";old.style.visibility="hidden";old.style.transform=oldEntry?.direction==="previous"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)";swipeFrame=null;swipeTarget=null}if(!swipeFrame){const thisGesture=gestureId;void getPage(target).then(doc=>{const entry=preparePreview(target,doc);return entry.ready.then(()=>{if(start&&start.horizontal&&gestureId===thisGesture&&start.target===pageURL(target))showSwipeFrame(target,direction,start.dx)})}).catch(()=>{})}if(swipeFrame&&swipeTarget===start.target){swipeFrame.style.transition="none";swipeFrame.style.visibility="visible";swipeFrame.style.transform=`translate3d(${(direction==="next"?width():-width())+dx}px,0,0)`}},{passive:false});
  document.addEventListener("touchcancel",()=>{start=null;settleSwipe()},{passive:true});
- document.addEventListener("touchend",event=>{if(!start||changing||event.changedTouches.length!==1){start=null;settleSwipe();return}const p=event.changedTouches[0],dx=p.clientX-start.x,dy=p.clientY-start.y,wasHorizontal=start.horizontal;start=null;const direction=dx<0?"next":"previous",target=routes[index+(direction==="next"?1:-1)],threshold=Math.min(64,width()*.13);if(!wasHorizontal||!target||Math.abs(dx)<threshold||Math.abs(dx)<Math.abs(dy)*1.2){settleSwipe();return}void softNavigate(target,direction)},{passive:true});
+ document.addEventListener("touchend",event=>{if(!start||changing||event.changedTouches.length!==1){start=null;settleSwipe();return}const p=event.changedTouches[0],dx=p.clientX-start.x,dy=p.clientY-start.y,wasHorizontal=start.horizontal,direction=dx<0?"next":"previous",target=routes[index+(direction==="next"?1:-1)],threshold=Math.min(64,width()*.13);start=null;if(!wasHorizontal||!target||Math.abs(dx)<threshold||Math.abs(dx)<Math.abs(dy)*1.2){settleSwipe();return}const frame=swipeFrame&&swipeTarget===pageURL(target)?swipeFrame:null;swipeFrame=null;swipeTarget=null;swipeDirection=null;void softNavigate(target,direction,true,frame)},{passive:true});
 })();
