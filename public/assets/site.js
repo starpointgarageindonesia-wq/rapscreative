@@ -39,9 +39,17 @@
  const photoOnly='img,picture,video,.hero-shot,.hero-art,.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-stack';
  const targets=new Set();
  for(const el of originalTargets){
-  if(el.matches(photoOnly))continue;
+  // Any image-bearing wrapper must remain visible. Without .seen the site's
+  // base CSS hides the complete hero/card, including its photograph.
+  if(el.matches(photoOnly)){
+   el.classList.add("seen");
+   el.classList.remove("raps-scroll-pending","raps-scroll-visible");
+   continue;
+  }
   if(!el.querySelector(mediaSelector)){targets.add(el);continue}
-  // A card with an actual photo stays still; its text retains scroll-reveal.
+  el.classList.add("seen");
+  el.classList.remove("raps-scroll-pending","raps-scroll-visible");
+  // Animate the textual children, never their photo-bearing parent.
   for(const textNode of el.querySelectorAll(textSelector)){
    if(!textNode.querySelector(mediaSelector)&&!textNode.matches(photoOnly)){
     targets.add(textNode);
