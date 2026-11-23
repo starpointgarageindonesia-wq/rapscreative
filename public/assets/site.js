@@ -87,9 +87,11 @@
 /* Horizontal swipe navigation across RAPS Creative pages (touch-only). */
 (()=>{
  "use strict";
- const routes=["/","/website/","/ugc/","/editing/","/content-creation/","/marketing/","/social-media/","/undangan-digital/","/paket/","/harga/"];
  const canonical=location.pathname.replace(/\/index\.html$/,"/").replace(/\/{2,}/g,"/");
  const page=canonical.endsWith("/")?canonical:canonical+"/";
+ const english=page.startsWith("/en/");
+ const routes=english?["/en/","/en/website/","/en/ugc/","/en/editing/","/en/content-creation/","/en/marketing/","/en/social-media/","/en/digital-invitation/","/en/bundles/","/en/pricing/"]:["/","/website/","/ugc/","/editing/","/content-creation/","/marketing/","/social-media/","/undangan-digital/","/paket/","/harga/"];
+ const labels=english?["Home","Website","UGC","Editing","Content","Marketing","Social","Invitation","Bundles","Pricing"]:["Beranda","Website","UGC","Editing","Konten","Marketing","Social Media","Undangan","Bundling","Harga"];
  const index=routes.indexOf(page);
  if(index<0||!window.addEventListener)return;
  const root=document.documentElement,body=document.body,reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -111,20 +113,19 @@
    body.addEventListener("animationend",finishArrival);
   }
  }catch{}
- const labels=["Beranda","Website","UGC","Editing","Konten","Marketing","Social Media","Undangan","Bundling","Harga"];
  const header=document.querySelector(".site-header");
  if(header){
   const guide=document.createElement("div");
   guide.className="swipe-guide";
   guide.setAttribute("role","note");
-  guide.setAttribute("aria-label","Geser kiri atau kanan untuk melihat layanan lain");
+  guide.setAttribute("aria-label",english?"Swipe left or right to see other services":"Geser kiri atau kanan untuk melihat layanan lain");
   const motion=document.createElement("span");
   motion.className="swipe-guide-motion";
   motion.setAttribute("aria-hidden","true");
   motion.append(document.createElement("i"));
   const copy=document.createElement("span");
   copy.className="swipe-guide-copy";
-  copy.textContent="Geser kiri/kanan untuk layanan lain";
+  copy.textContent=english?"Swipe left/right for other services":"Geser kiri/kanan untuk layanan lain";
   const count=document.createElement("strong");
   count.className="swipe-guide-count";
   count.textContent=`${labels[index]} · ${index+1}/${routes.length}`;
