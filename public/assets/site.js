@@ -65,6 +65,14 @@
  const page=canonical.endsWith("/")?canonical:canonical+"/";
  const index=routes.indexOf(page);
  if(index<0||!window.addEventListener)return;
+ const arrivalKey="raps-swipe-arrival";
+ try{
+  const arrival=sessionStorage.getItem(arrivalKey);
+  if(arrival==="next"||arrival==="previous"){
+   document.documentElement.dataset.swipeArrival=arrival;
+   sessionStorage.removeItem(arrivalKey);
+  }
+ }catch{}
  const labels=["Beranda","Website","UGC","Editing","Konten","Marketing","Social Media","Undangan","Bundling","Harga"];
  const header=document.querySelector(".site-header");
  if(header){
@@ -86,7 +94,7 @@
   header.after(guide);
  }
  [routes[index-1],routes[index+1]].filter(Boolean).forEach(href=>{
-  const link=document.createElement("link");link.rel="prefetch";link.href=href;document.head.append(link);
+  const link=document.createElement("link");link.rel="prefetch";link.as="document";link.href=href;document.head.append(link);
  });
  let start=null,changing=false;
  const ignore='a,button,input,textarea,select,summary,[contenteditable="true"],[role="slider"],[data-no-swipe]';
@@ -105,6 +113,7 @@
   const target=routes[index+(dx<0?1:-1)];
   if(!target)return;
   changing=true;
+  try{sessionStorage.setItem(arrivalKey,dx<0?"next":"previous")}catch{}
   location.assign(target);
  },{passive:true});
 })();
