@@ -52,9 +52,16 @@
   el.style.setProperty("--reveal-x",order%2?"44px":"-44px");
   el.style.setProperty("--reveal-axis",order%2?"y":"x");
   el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*16}ms`);
-  const rect=el.getBoundingClientRect();
-  el.classList.remove("seen");
-  if(rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98){entering.push(el);if(immediate)el.classList.add("seen")}
+  const rect=el.getBoundingClientRect(),visible=rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98;
+  // First-viewport text was already on screen during swipe; never hide it again.
+  if(!immediate||!visible)el.classList.remove("seen");
+  if(visible){
+   entering.push(el);
+   if(immediate){
+    el.style.setProperty("--reveal-stagger","0ms");
+    el.classList.add("seen");
+   }
+  }
   revealObserver.observe(el);
  });
  document.body.classList.add("animate-in");
@@ -130,7 +137,7 @@
  if(index<0)return;
  let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
  const cache=new Map(),preloads=new Map(),previewFrames=new Map();
- const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="/* During a swipe, only the incoming screen moves. Scroll effects remain untouched. */\nhtml.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate;overflow-anchor:none!important}\n.raps-route-native-preview .reveal,.raps-route-native-preview .scroll-reveal{\n opacity:1!important;translate:none!important;scale:1!important;rotate:none!important;\n transform:none!important;filter:none!important;transition:none!important;animation:none!important\n}\n.raps-route-native-preview main img,.raps-route-native-preview .hero-art-halo,\n.raps-route-native-preview .service-hero-art,.raps-route-native-preview .project-detail-art,\n.raps-route-native-preview .raps-web-shot-browser,.raps-route-native-preview .portfolio-preview{\n translate:none!important;scale:1!important;rotate:none!important\n}";document.head.append(swipeStyle);
+ const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="/* Incoming pane already contains rendered text; preserve that paint on commit. */\nhtml.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate;overflow-anchor:none!important}\n.raps-route-native-preview .reveal,.raps-route-native-preview .scroll-reveal,\nhtml.raps-route-arriving .reveal,html.raps-route-arriving .scroll-reveal{\n opacity:1!important;translate:none!important;scale:1!important;rotate:none!important;\n transform:none!important;filter:none!important;transition:none!important;\n transition-delay:0ms!important;animation:none!important\n}\n.raps-route-native-preview main img,.raps-route-native-preview .hero-art-halo,\n.raps-route-native-preview .service-hero-art,.raps-route-native-preview .project-detail-art,\n.raps-route-native-preview .raps-web-shot-browser,.raps-route-native-preview .portfolio-preview{\n translate:none!important;scale:1!important;rotate:none!important\n}";document.head.append(swipeStyle);
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
@@ -251,6 +258,7 @@
   const commit=()=>{
    committed=true;
    history.scrollRestoration="manual";
+   root.classList.add("raps-route-arriving");
    body.className=incomingBody.className;
    if(visualPreview?.dataset.ready==="true"&&visualPreview.isConnected){
     // The source preview stays visually complete while destination lays out.
@@ -292,14 +300,14 @@
      window.scrollTo(0,0);resolve();
     });
    }));
-   frame.remove();previewFrames.delete(path);root.classList.remove("swipe-committing");
+   frame.remove();previewFrames.delete(path);root.classList.remove("swipe-committing","raps-route-arriving");
   };
   try{
    if(!reduced)await animateFallback();else commit();
   }catch(error){
    console.warn("RAPS route transition recovered",error);if(!committed)commit();
   }finally{
-   activateStyles(doc,true);body.removeAttribute("style");root.classList.remove("swipe-tracking","swipe-committing","route-fallback","raps-route-swiping");delete root.dataset.routeDirection;delete root.dataset.swipeDir;changing=false;
+   activateStyles(doc,true);body.removeAttribute("style");root.classList.remove("swipe-tracking","swipe-committing","route-fallback","raps-route-swiping","raps-route-arriving");delete root.dataset.routeDirection;delete root.dataset.swipeDir;changing=false;
    previewFrames.forEach((entry,key)=>{if(!entry.frame.isConnected){previewFrames.delete(key);return}entry.frame.style.transition="none";entry.frame.style.visibility="hidden";entry.frame.style.transform=entry.direction==="previous"?"translate3d(-100vw,0,0)":"translate3d(100vw,0,0)"});
    prewarmAdjacent();
   }
