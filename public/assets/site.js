@@ -25,7 +25,38 @@
   ".portfolio-list > *",".last-cta-inner > *","main section article",".portfolio-preview",
   ".site-footer .foot-grid > *",".site-footer .foot-bottom"
  ].join(",");
- const elements=[...document.querySelectorAll(revealSelector)];
+ const originalTargets=[...document.querySelectorAll(revealSelector)];
+ // Never animate a photographic wrapper, because that would move its image.
+ // Restore scroll animations on the TEXT inside those wrappers instead.
+ const mediaSelector='img:not(.brand-icon):not([aria-hidden="true"]),picture,video';
+ const textSelector=[
+  "h1","h2","h3","h4","p","figcaption",".eyebrow",".service-hero-copy",
+  ".project-detail-copy",".section-heading",".story-lede",".rc-card-overline",
+  ".rc-price",".raps-web-work-name",".raps-web-shot-browserbar",
+  ".raps-web-shot-placeholder",".preview-headline",".preview-top",
+  ".service-chip-row",".button-row",".tile-type",".tile-bottom"
+ ].join(",");
+ const photoOnly='img,picture,video,figure,.hero-shot,.hero-art,.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview,.portfolio-stack';
+ const targets=new Set();
+ for(const el of originalTargets){
+  if(el.matches(photoOnly))continue;
+  if(!el.querySelector(mediaSelector)){targets.add(el);continue}
+  // A card with an actual photo stays still; its text retains scroll-reveal.
+  for(const textNode of el.querySelectorAll(textSelector)){
+   if(!textNode.querySelector(mediaSelector)&&!textNode.matches(photoOnly)){
+    targets.add(textNode);
+   }
+  }
+ }
+ // A text element already animated by its parent must not animate twice.
+ const elements=[...targets].filter(el=>{
+  let p=el.parentElement;
+  while(p){
+   if(targets.has(p))return false;
+   p=p.parentElement;
+  }
+  return true;
+ });
  const pending=new Set();
  let revealObserver=null,scrollFrame=false;
  // First-pass DOM is painted immediately, including hero text and every button.
@@ -48,8 +79,6 @@
   // Above-the-fold content stays in the native cross-document swipe snapshot.
   for(const el of elements){
    const rect=el.getBoundingClientRect();
-   // Do not animate photo containers: moving their ancestor moves the photo.
-   if(el.matches("img,picture,video,figure,.hero-shot,.hero-art,.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-card,.raps-web-work-card,.raps-web-shot-browser,.portfolio-preview,.portfolio-stack")||el.querySelector("img,picture,video"))continue;
    if(rect.top<=innerHeight+100||rect.bottom<=0)continue;
    el.classList.add("raps-scroll-pending");
    pending.add(el);
