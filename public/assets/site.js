@@ -66,8 +66,9 @@
   return true;
  });
  const pending=new Set();
- let revealObserver=null,scrollFrame=false;
- // First-pass DOM is painted immediately, including hero text and every button.
+ let revealObserver=null;
+ // First-screen copy must be visible immediately; lower content animates once.
+ // The intersection is measured INSIDE the screen, never 170px ahead of it.
  elements.forEach(el=>{
   if(!el.classList.contains("reveal"))el.classList.add("scroll-reveal");
   el.classList.add("seen");
@@ -78,35 +79,21 @@
    if(!pending.has(el))return;
    pending.delete(el);
    el.classList.add("raps-scroll-visible");
-   revealObserver?.unobserve(el);
+   revealObserver.unobserve(el);
   };
   revealObserver=new IntersectionObserver(entries=>{
-   entries.forEach(entry=>{if(entry.isIntersecting)show(entry.target)});
-  },{threshold:0.01,rootMargin:"90px 0px 170px 0px"});
-  // Do not animate items already on screen or just below the fold.
-  // Above-the-fold content stays in the native cross-document swipe snapshot.
+   for(const entry of entries){
+    if(entry.isIntersecting)show(entry.target);
+   }
+  },{threshold:0.01,rootMargin:"0px 0px -14% 0px"});
   for(const el of elements){
    const rect=el.getBoundingClientRect();
-   if(rect.top<=innerHeight+100||rect.bottom<=0)continue;
+   // Keep the full first fold visible, including text beside photographs.
+   if(rect.top<innerHeight||rect.bottom<=0)continue;
    el.classList.add("raps-scroll-pending");
    pending.add(el);
    revealObserver.observe(el);
   }
-  const checkVisible=()=>{
-   scrollFrame=false;
-   for(const el of pending){
-    const r=el.getBoundingClientRect();
-    if(r.top<=innerHeight+170&&r.bottom>=-90)show(el);
-   }
-  };
-  addEventListener("scroll",()=>{
-   if(!scrollFrame&&pending.size){
-    scrollFrame=true;
-    requestAnimationFrame(checkVisible);
-   }
-  },{passive:true});
-  addEventListener("resize",checkVisible,{passive:true});
-  checkVisible();
  }
  document.body.classList.add("animate-in");
  // Images and image-bearing artwork stay static while the document scrolls.
