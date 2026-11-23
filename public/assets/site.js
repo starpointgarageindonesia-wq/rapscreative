@@ -33,7 +33,7 @@
    el.style.setProperty("--reveal-y",above?"-56px":"56px");
    el.classList.remove("seen");
   }
- }),{threshold:.1,rootMargin:"-5% 0px -6% 0px"});
+ }),{threshold:.06,rootMargin:"-2% 0px -2% 0px"});
  revealObserver.disconnect();
  const orderByParent=new Map();
  items.forEach(el=>{
