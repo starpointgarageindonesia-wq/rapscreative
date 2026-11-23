@@ -485,17 +485,12 @@ span.eyebrow:not(.badge-hero){display:none!important}
 @keyframes swipe-guide-dot{to{transform:translateX(26px)}}
 @media(prefers-reduced-motion:reduce){.swipe-guide-motion i{animation:none;transform:translateX(13px)}}
 
-/* A single, edge-to-edge slide keeps route changes connected to the swipe. */
-html.swipe-tracking{overflow-x:hidden;background:var(--surface-page,#fff)}
+/* Finger-linked paging: one flat surface, matching native iOS page swipes. */
+@media(pointer:coarse){body{touch-action:pan-y pinch-zoom}}
+html.swipe-tracking,html.swipe-committing{overflow-x:hidden;overscroll-behavior-x:none;background:var(--surface-page,#fff)}
 [data-theme="dark"].swipe-tracking{background:#0c1624}
 html.route-fallback{overflow-x:hidden}
-html.swipe-tracking body{will-change:transform}
-html.swipe-tracking::after{
- content:"";position:fixed;z-index:9999;top:0;bottom:0;width:3px;pointer-events:none;
- background:linear-gradient(180deg,#f1d39c,#b58a52);opacity:.88
-}
-html.swipe-tracking[data-swipe-dir="next"]::after{right:0}
-html.swipe-tracking[data-swipe-dir="previous"]::after{left:0}
+html.swipe-tracking body{will-change:transform;user-select:none;cursor:grabbing}
 @supports (view-transition-name:root){
  @view-transition{navigation:none}
  html::view-transition-group(root){animation-duration:340ms;animation-timing-function:cubic-bezier(.22,.7,.18,1)}
