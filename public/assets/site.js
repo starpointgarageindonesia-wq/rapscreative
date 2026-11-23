@@ -27,11 +27,13 @@
   if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting"))return;
   if(entry.isIntersecting){
    const fromBottom=box.top>innerHeight*.52;
-   el.style.setProperty("--reveal-y",fromBottom?"56px":"-56px");
+   el.style.setProperty("--reveal-y",fromBottom?"82px":"-82px");
+   el.style.setProperty("--reveal-angle",fromBottom?"7deg":"-7deg");
    el.classList.add("seen");
   }else{
    const above=box.bottom<0;
-   el.style.setProperty("--reveal-y",above?"-56px":"56px");
+   el.style.setProperty("--reveal-y",above?"-82px":"82px");
+   el.style.setProperty("--reveal-angle",above?"-7deg":"7deg");
    el.classList.remove("seen");
   }
  }),{threshold:.06,rootMargin:"-2% 0px -2% 0px"});
@@ -41,8 +43,9 @@
   if(!el.classList.contains("reveal"))el.classList.add("scroll-reveal");
   const parent=el.parentElement,order=orderByParent.get(parent)||0;
   orderByParent.set(parent,order+1);
-  el.style.setProperty("--reveal-x",order%2?"30px":"-30px");
-  el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*24}ms`);
+  el.style.setProperty("--reveal-x",order%2?"44px":"-44px");
+  el.style.setProperty("--reveal-axis",order%2?"y":"x");
+  el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*16}ms`);
   const rect=el.getBoundingClientRect();
   el.classList.remove("seen");
   if(rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98)entering.push(el);
@@ -53,7 +56,7 @@
  };
  watchReveals();
  document.addEventListener("raps:route-loaded",watchReveals);
- const motionSelector=".hero-shot img,.portfolio-montage img,.service-visual img,.about-visual-card,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
+ const motionSelector="main img:not(.site-logo img),.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
  let motionItems=[...document.querySelectorAll(motionSelector)];
  let motionFrame=false;
  const syncScrollMotion=()=>{
@@ -64,8 +67,9 @@
    if(rect.bottom< -80||rect.top>innerHeight+80){el.style.willChange="";return}
    const delta=(rect.top+rect.height*.5-center)/span,depth=Math.max(0,1-Math.min(1,Math.abs(delta)));
    el.style.willChange="translate,scale";
-   el.style.setProperty("--motion-y",`${(-delta*56).toFixed(1)}px`);
-   el.style.setProperty("--motion-scale",(0.9+depth*.28).toFixed(3));
+   el.style.setProperty("--motion-y",`${(-delta*72).toFixed(1)}px`);
+   el.style.setProperty("--motion-scale",(0.88+depth*.34).toFixed(3));
+   el.style.setProperty("--motion-angle",`${(-delta*3.5).toFixed(2)}deg`);
   });
   motionFrame=false;
  };
