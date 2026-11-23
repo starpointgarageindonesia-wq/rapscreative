@@ -57,12 +57,7 @@ body{background:var(--surface-page)}
 .price-card .price-details{margin-top:auto}
 .price-card h3{min-height:1.2em}
 .project-detail{align-items:center;gap:clamp(20px,3vw,40px)}
-/* Cross-document view transitions on supporting browsers, zero artificial navigation wait */
-@view-transition{navigation:auto}
-::view-transition-old(root){animation:raps-page-out .12s ease-out both}
-::view-transition-new(root){animation:raps-page-in .16s ease-out both}
-@keyframes raps-page-in{from{opacity:.92;transform:translateX(11px)}to{opacity:1;transform:translateX(0)}}
-@keyframes raps-page-out{to{opacity:.92;transform:translateX(-8px)}}
+/* Route swipes are animated directly by the page gesture, not a browser fade. */
 /* Dark theme: navy/charcoal surfaces, legible text, warm-gold emphasis */
 [data-theme="dark"]{color-scheme:dark;--ink:#f4f6fa;--muted:#bac7d7;--line:#344e69;--surface-card:#182a40;--surface-page:#0c1624;--surface-panel:#15283e;--surface-border:#344e67;--text-primary:#f5f8fa;--text-secondary:#b9c7d7;--shadow-ux:0 16px 40px rgba(0,0,0,.28)}
 [data-theme="dark"] body{background:#0c1624;color:#f1f6fc}
@@ -120,7 +115,6 @@ body{background:var(--surface-page)}
 [data-theme="dark"] .site-footer{background:#0a1320;color:#d9e2ed}
 [data-theme="dark"] .feature-banner{background:linear-gradient(120deg,#213b58,#12293f)}
 [data-theme="dark"] .service-finale{background:linear-gradient(120deg,#244462,#11243c)}
-@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none!important}}
 /* Compact handset header: preserve the full RAPS logo while keeping EN/IN and theme controls usable. */
 @media(max-width:480px){
  .site-header .nav-shell{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand menu" "actions actions";column-gap:8px;row-gap:4px;padding-top:8px;padding-bottom:8px;min-height:0}
@@ -133,6 +127,29 @@ body{background:var(--surface-page)}
 
 .portfolio-triptych{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:420px;padding:24px 0}
 .portfolio-preview{display:block;color:white!important;text-decoration:none!important;border:6px solid #14283f;border-radius:18px;aspect-ratio:3/4;overflow:hidden;box-shadow:0 25px 45px #10243c44;transition:transform .25s ease;min-width:0}
+
+/* Strong, repeatable scroll reveals with direction, depth, and a short stagger. */
+@media(prefers-reduced-motion:no-preference){
+ body.animate-in .reveal,body.animate-in .scroll-reveal{
+  transition:opacity .42s ease,translate .68s cubic-bezier(.18,1.2,.3,1),scale .68s cubic-bezier(.18,1.2,.3,1),rotate .68s cubic-bezier(.18,1.2,.3,1),filter .52s ease;
+  transition-delay:var(--reveal-stagger,0ms);transform-origin:center
+ }
+ body.animate-in .reveal{transform:none}
+ body.animate-in .reveal:not(.seen),body.animate-in .scroll-reveal:not(.seen){
+  opacity:0;translate:0 var(--reveal-y,78px);scale:.84;rotate:var(--reveal-angle,-2deg);
+  filter:blur(12px)
+ }
+ body.animate-in .reveal.seen,body.animate-in .scroll-reveal.seen{
+  opacity:1;translate:0 0;scale:1;rotate:0deg;filter:blur(0)
+ }
+ body.swipe-entering .reveal,body.swipe-entering .scroll-reveal{
+  opacity:1!important;translate:0 0!important;scale:1!important;rotate:0deg!important;
+  filter:none!important;transition:none!important
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.animate-in .reveal,body.animate-in .scroll-reveal{opacity:1!important;translate:none!important;scale:none!important;rotate:none!important;filter:none!important;transition:none!important}
+}
 .portfolio-preview:hover{transform:translateY(-12px)!important}
 .portfolio-preview--garage{grid-column:1/7;grid-row:1;background:linear-gradient(145deg,#090f18,#193453 65%,#7d2529);transform:rotate(-6deg);z-index:2}
 .portfolio-preview--cireng{grid-column:5/10;grid-row:1;background:linear-gradient(145deg,#fff0ce,#d28b39 65%,#99532d);transform:translateY(25px) rotate(4deg);z-index:3}
