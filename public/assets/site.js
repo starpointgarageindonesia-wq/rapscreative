@@ -65,6 +65,26 @@
  const page=canonical.endsWith("/")?canonical:canonical+"/";
  const index=routes.indexOf(page);
  if(index<0||!window.addEventListener)return;
+ const labels=["Beranda","Website","UGC","Editing","Konten","Marketing","Social Media","Undangan","Bundling","Harga"];
+ const header=document.querySelector(".site-header");
+ if(header){
+  const guide=document.createElement("div");
+  guide.className="swipe-guide";
+  guide.setAttribute("role","note");
+  guide.setAttribute("aria-label","Geser kiri atau kanan untuk melihat layanan lain");
+  const motion=document.createElement("span");
+  motion.className="swipe-guide-motion";
+  motion.setAttribute("aria-hidden","true");
+  motion.append(document.createElement("i"));
+  const copy=document.createElement("span");
+  copy.className="swipe-guide-copy";
+  copy.textContent="Geser kiri/kanan untuk layanan lain";
+  const count=document.createElement("strong");
+  count.className="swipe-guide-count";
+  count.textContent=`${labels[index]} · ${index+1}/${routes.length}`;
+  guide.append(motion,copy,count);
+  header.after(guide);
+ }
  [routes[index-1],routes[index+1]].filter(Boolean).forEach(href=>{
   const link=document.createElement("link");link.rel="prefetch";link.href=href;document.head.append(link);
  });

@@ -459,3 +459,28 @@ p{line-height:1.8}.eyebrow{color:#9c743d;letter-spacing:.14em}
 
 /* Hide redundant small section captions sitewide; preserve the approved homepage region badge. */
 span.eyebrow:not(.badge-hero){display:none!important}
+
+/* Mobile cue for the page-to-page service swipe. */
+.swipe-guide{display:none}
+@media(max-width:820px) and (pointer:coarse){
+ .swipe-guide{
+  display:flex;align-items:center;gap:10px;min-height:40px;padding:8px 17px;
+  position:relative;z-index:85;background:linear-gradient(90deg,#112740,#1b3b59);
+  color:#fff;border-bottom:1px solid #ffffff24;font-size:13px;font-weight:750;
+  letter-spacing:.005em;box-shadow:0 7px 20px #101d3114
+ }
+ .swipe-guide-motion{position:relative;width:35px;height:13px;flex:none}
+ .swipe-guide-motion:before{
+  content:"";position:absolute;left:0;right:0;top:6px;height:2px;
+  border-radius:99px;background:#ffffff4d
+ }
+ .swipe-guide-motion i{
+  position:absolute;top:2px;left:0;width:9px;height:9px;border-radius:50%;
+  background:#e3bc78;box-shadow:0 0 0 3px #e3bc7833;
+  animation:swipe-guide-dot 1.15s ease-in-out infinite alternate
+ }
+ .swipe-guide-copy{flex:1;line-height:1.25}
+ .swipe-guide-count{font-size:12px;letter-spacing:.025em;color:#f0d7a8;white-space:nowrap}
+}
+@keyframes swipe-guide-dot{to{transform:translateX(26px)}}
+@media(prefers-reduced-motion:reduce){.swipe-guide-motion i{animation:none;transform:translateX(13px)}}
