@@ -13,14 +13,76 @@
  let frame=false;
  const sync=()=>{let d=Math.max(1,document.documentElement.scrollHeight-innerHeight),indicator=document.getElementById("scroll-indicator");if(indicator)indicator.style.width=Math.min(100,Math.max(0,scrollY/d*100))+"%";frame=false};
  addEventListener("scroll",()=>{if(!frame){frame=true;requestAnimationFrame(sync)}},{passive:true});addEventListener("resize",sync,{passive:true});sync();
- // Keep typography and hero images static. Do not re-trigger zoom, rotate,
- // fade, or stagger animations when swiping or arriving on a new page.
- const showContent=()=>{
-  document.body.classList.remove("animate-in");
-  document.querySelectorAll(".reveal,.scroll-reveal").forEach(el=>el.classList.add("seen"));
+ const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
+ let revealObserver=null;
+ const watchReveals=(immediate=false)=>{
+ if(reduced||!("IntersectionObserver" in window))return;
+ const selector=[
+  ".reveal", ".service-tile", ".story-card", ".price-card", ".faq", ".project-detail",
+  ".promo-note", ".feature-banner-inner", ".service-finale-inner", ".last-cta-inner",
+  ".section-heading", ".rc-head", ".rc-card", ".rc-addon-row", ".bundle-card", ".bundle-option",
+  ".about-grid > *", ".story-lede", ".raps-web-work-heading", ".raps-web-shot-card",
+  ".raps-web-work-card", ".website-feature", ".pricing-grid > *", ".pricing-cards > *",
+  ".portfolio-list > *", ".last-cta-inner > *", "main section article", ".portfolio-preview",
+  ".site-footer .foot-grid > *", ".site-footer .foot-bottom"
+ ].join(",");
+ const items=[...document.querySelectorAll(selector)];
+ const entering=[];
+ if(!revealObserver)revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+  const el=entry.target,box=entry.boundingClientRect;
+  if(document.documentElement.classList.contains("swipe-tracking")||document.documentElement.classList.contains("swipe-exiting")||document.documentElement.classList.contains("swipe-committing"))return;
+  if(entry.isIntersecting){
+   const fromBottom=box.top>innerHeight*.52;
+   el.style.setProperty("--reveal-y",fromBottom?"82px":"-82px");
+   el.style.setProperty("--reveal-angle",fromBottom?"7deg":"-7deg");
+   el.classList.add("seen");
+  }else{
+   const above=box.bottom<0;
+   el.style.setProperty("--reveal-y",above?"-82px":"82px");
+   el.style.setProperty("--reveal-angle",above?"-7deg":"7deg");
+   el.classList.remove("seen");
+  }
+ }),{threshold:.06,rootMargin:"-2% 0px -2% 0px"});
+ revealObserver.disconnect();
+ const orderByParent=new Map();
+ items.forEach(el=>{
+  if(!el.classList.contains("reveal"))el.classList.add("scroll-reveal");
+  const parent=el.parentElement,order=orderByParent.get(parent)||0;
+  orderByParent.set(parent,order+1);
+  el.style.setProperty("--reveal-x",order%2?"44px":"-44px");
+  el.style.setProperty("--reveal-axis",order%2?"y":"x");
+  el.style.setProperty("--reveal-stagger",`${Math.min(order,3)*16}ms`);
+  const rect=el.getBoundingClientRect();
+  el.classList.remove("seen");
+  if(rect.bottom>innerHeight*.02&&rect.top<innerHeight*.98){entering.push(el);if(immediate)el.classList.add("seen")}
+  revealObserver.observe(el);
+ });
+ document.body.classList.add("animate-in");
+ if(!immediate)requestAnimationFrame(()=>requestAnimationFrame(()=>entering.forEach(el=>el.classList.add("seen"))));
  };
- showContent();
- document.addEventListener("raps:route-loaded",showContent);
+ watchReveals();
+ document.addEventListener("raps:route-loaded",()=>watchReveals(true));
+ const motionSelector="main img:not(.site-logo img),.hero-art-halo,.service-hero-art,.project-detail-art,.raps-web-shot-browser,.portfolio-preview";
+ let motionItems=[...document.querySelectorAll(motionSelector)];
+ let motionFrame=false;
+ const syncScrollMotion=()=>{
+  if(reduced){motionFrame=false;return}
+  const center=innerHeight*.5,span=Math.max(innerHeight*.85,1);
+  const measured=motionItems.map(el=>({el,rect:el.getBoundingClientRect()}));
+  measured.forEach(({el,rect})=>{
+   if(el.tagName==="IMG"&&rect.width<100&&rect.height<64){el.style.willChange="";return}
+   if(rect.bottom< -80||rect.top>innerHeight+80){el.style.willChange="";return}
+   const delta=(rect.top+rect.height*.5-center)/span,depth=Math.max(0,1-Math.min(1,Math.abs(delta)));
+   el.style.willChange="translate,scale";
+   el.style.setProperty("--motion-y",`${(-delta*72).toFixed(1)}px`);
+   el.style.setProperty("--motion-scale",(0.88+depth*.34).toFixed(3));
+   el.style.setProperty("--motion-angle",`${(-delta*3.5).toFixed(2)}deg`);
+  });
+  motionFrame=false;
+ };
+ const requestScrollMotion=()=>{if(!motionFrame){motionFrame=true;requestAnimationFrame(syncScrollMotion)}};
+ addEventListener("scroll",requestScrollMotion,{passive:true});addEventListener("resize",requestScrollMotion,{passive:true});
+ document.addEventListener("raps:route-loaded",()=>{motionItems=[...document.querySelectorAll(motionSelector)];requestScrollMotion()});requestScrollMotion();
  const dialog=document.getElementById("benefit-dialog");
  if(dialog){
  const p=[];
@@ -68,7 +130,7 @@
  if(index<0)return;
  let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
  const cache=new Map(),preloads=new Map(),previewFrames=new Map();
- const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="body.animate-in .reveal,body.animate-in .scroll-reveal,.reveal,.scroll-reveal{\n opacity:1!important;translate:none!important;scale:none!important;rotate:none!important;\n filter:none!important;transition:none!important;transition-delay:0ms!important;animation:none!important\n}\nbody.animate-in main img,body.animate-in .hero-art-halo,\nbody.animate-in .service-hero-art,body.animate-in .project-detail-art,\nbody.animate-in .raps-web-shot-browser,body.animate-in .portfolio-preview{\n translate:none!important;scale:none!important;rotate:none!important\n}\nhtml.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping body{backface-visibility:hidden;-webkit-backface-visibility:hidden}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate}\n.tap-pop{animation:none!important;transform:none!important}";document.head.append(swipeStyle);
+ const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="html.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping body{overflow-anchor:none!important;backface-visibility:hidden;-webkit-backface-visibility:hidden}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate}\nhtml.raps-route-swiping body.animate-in .reveal,\nhtml.raps-route-swiping body.animate-in .scroll-reveal,\nhtml.raps-route-swiping .raps-route-native-preview .reveal,\nhtml.raps-route-swiping .raps-route-native-preview .scroll-reveal{\n opacity:1!important;translate:none!important;scale:1!important;rotate:none!important;\n transform:none!important;filter:none!important;transition:none!important;transition-delay:0ms!important;animation:none!important\n}\nhtml.raps-route-swiping body.animate-in main img,\nhtml.raps-route-swiping body.animate-in .hero-art-halo,\nhtml.raps-route-swiping .raps-route-native-preview main img{\n translate:none!important;scale:1!important;rotate:none!important\n}";document.head.append(swipeStyle);
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
