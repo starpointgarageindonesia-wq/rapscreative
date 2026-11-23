@@ -488,6 +488,7 @@ span.eyebrow:not(.badge-hero){display:none!important}
 /* A single, edge-to-edge slide keeps route changes connected to the swipe. */
 html.swipe-tracking{overflow-x:hidden;background:var(--surface-page,#fff)}
 [data-theme="dark"].swipe-tracking{background:#0c1624}
+html.route-fallback{overflow-x:hidden}
 html.swipe-tracking body{will-change:transform}
 html.swipe-tracking::after{
  content:"";position:fixed;z-index:9999;top:0;bottom:0;width:3px;pointer-events:none;
@@ -508,9 +509,3 @@ html.swipe-tracking[data-swipe-dir="previous"]::after{left:0}
 @keyframes raps-route-in-right{from{transform:translateX(100vw)}to{transform:translateX(0)}}
 @keyframes raps-route-out-right{to{transform:translateX(100vw)}}
 @keyframes raps-route-in-left{from{transform:translateX(-100vw)}to{transform:translateX(0)}}
-@keyframes raps-route-fallback-next{from{opacity:.9;translate:2% 0}to{opacity:1;translate:0 0}}
-@keyframes raps-route-fallback-previous{from{opacity:.9;translate:-2% 0}to{opacity:1;translate:0 0}}
-@media(prefers-reduced-motion:no-preference){
- body.route-content-enter-next{animation:raps-route-fallback-next 340ms cubic-bezier(.22,.7,.18,1) both}
- body.route-content-enter-previous{animation:raps-route-fallback-previous 340ms cubic-bezier(.22,.7,.18,1) both}
-}
