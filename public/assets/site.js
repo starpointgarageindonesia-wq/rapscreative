@@ -235,6 +235,8 @@
     const fragment=document.createDocumentFragment();
     while(visualPreview.firstChild)fragment.append(visualPreview.firstChild);
     body.replaceChildren(fragment);
+    // Never expose the empty opaque preview for even one animation frame.
+    visualPreview.style.visibility="hidden";
    }else body.innerHTML=incomingBody.innerHTML;
    body.style.transition="none";body.style.transform="none";
    updateHead(doc);if(push)history.pushState({rapsSoft:true},"",target);
