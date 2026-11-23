@@ -68,7 +68,7 @@
  if(index<0)return;
  let changing=false,start=null,softControlsActive=false,swipeFrame=null,swipeTarget=null,swipeDirection=null;
  const cache=new Map(),preloads=new Map(),previewFrames=new Map();
- const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="body.animate-in .reveal,body.animate-in .scroll-reveal,.reveal,.scroll-reveal{\n opacity:1!important;translate:none!important;scale:none!important;rotate:none!important;\n filter:none!important;transition:none!important;transition-delay:0ms!important;animation:none!important\n}\nbody.animate-in main img,body.animate-in .hero-art-halo,\nbody.animate-in .service-hero-art,body.animate-in .project-detail-art,\nbody.animate-in .raps-web-shot-browser,body.animate-in .portfolio-preview{\n translate:none!important;scale:none!important;rotate:none!important\n}\nhtml.raps-route-swiping{overflow-x:clip!important}\nhtml.raps-route-swiping body{backface-visibility:hidden;-webkit-backface-visibility:hidden}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate}\n.tap-pop{animation:none!important;transform:none!important}";document.head.append(swipeStyle);
+ const swipeStyle=document.createElement("style");swipeStyle.id="raps-native-swipe-style";swipeStyle.textContent="body.animate-in .reveal,body.animate-in .scroll-reveal,.reveal,.scroll-reveal{\n opacity:1!important;translate:none!important;scale:none!important;rotate:none!important;\n filter:none!important;transition:none!important;transition-delay:0ms!important;animation:none!important\n}\nbody.animate-in main img,body.animate-in .hero-art-halo,\nbody.animate-in .service-hero-art,body.animate-in .project-detail-art,\nbody.animate-in .raps-web-shot-browser,body.animate-in .portfolio-preview{\n translate:none!important;scale:none!important;rotate:none!important\n}\nhtml.raps-route-swiping{overflow-x:clip!important;overflow-anchor:none!important;scroll-behavior:auto!important}\nhtml.raps-route-swiping body{backface-visibility:hidden;-webkit-backface-visibility:hidden}\nhtml.raps-route-swiping .raps-route-native-preview{box-sizing:border-box;isolation:isolate}\n.tap-pop{animation:none!important;transform:none!important}";document.head.append(swipeStyle);
  const routeStyles=()=>[...document.querySelectorAll('link[rel="stylesheet"][data-raps-route-style]')];
  document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]').forEach(link=>{if(!/\/assets\/(site|experience)\.css(?:\?|$)/.test(link.href))link.dataset.rapsRouteStyle="1"});
  const pageURL=path=>normalize(path);
@@ -200,6 +200,7 @@
    body.style.transition="none";body.style.transform="none";
    updateHead(doc);if(push)history.pushState({rapsSoft:true},"",target);
    routes=routesFor(location.pathname);labels=labelsFor(location.pathname.startsWith("/en/"));currentPath=normalize(location.pathname);index=routes.indexOf(currentPath);
+   if(document.scrollingElement)document.scrollingElement.scrollTop=0;
    window.scrollTo(0,0);syncServiceNav();buildGuide();syncLanguageAndTheme();softControlsActive=true;
    body.classList.remove("animate-in");document.dispatchEvent(new CustomEvent("raps:route-loaded"));
    scriptURLs.forEach(src=>{const script=document.createElement("script");script.src=new URL(src,location.origin).href;script.async=false;body.append(script)});
@@ -220,7 +221,14 @@
    await new Promise(resolve=>{let done=false;const finish=event=>{if(event&&event.target!==frame)return;if(event&&event.propertyName!=="transform")return;if(done)return;done=true;frame.removeEventListener("transitionend",finish);clearTimeout(timeout);resolve()};const timeout=setTimeout(()=>finish(),250);frame.addEventListener("transitionend",finish)});
    commit();
    document.querySelectorAll(".reveal,.scroll-reveal").forEach(el=>{const rect=el.getBoundingClientRect();if(rect.bottom>0&&rect.top<innerHeight)el.classList.add("seen")});
-   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   await new Promise(resolve=>requestAnimationFrame(()=>{
+    if(document.scrollingElement)document.scrollingElement.scrollTop=0;
+    window.scrollTo(0,0);
+    requestAnimationFrame(()=>{
+     if(document.scrollingElement)document.scrollingElement.scrollTop=0;
+     window.scrollTo(0,0);resolve();
+    });
+   }));
    frame.remove();previewFrames.delete(path);root.classList.remove("swipe-committing");
   };
   try{
