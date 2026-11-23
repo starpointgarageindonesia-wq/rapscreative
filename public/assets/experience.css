@@ -204,6 +204,22 @@ body{background:var(--surface-page)}
 @media(max-width:760px){.page-website .service-hero-grid{grid-template-columns:1fr;width:calc(100% - 34px);padding:42px 0 8px}.page-website .service-hero-copy h1{font-size:clamp(39px,9vw,59px)}.page-website .service-hero-art{min-height:0;margin:12px 0 0}.page-website .portfolio-montage img{width:100%;max-width:100%}.page-website .website-feature-rail{width:calc(100% - 34px);grid-template-columns:repeat(2,minmax(0,1fr));padding:11px;margin-bottom:24px}.page-website .website-feature{padding:12px 9px;min-height:70px}.page-website .website-feature:nth-child(2){border:0}.page-website .website-feature:nth-child(-n+2){border-bottom:1px solid #ffffff3a}}
 @media(max-width:420px){.page-website .service-hero-copy h1{font-size:clamp(32px,9vw,45px)}}
 
+/* A photo-bearing .reveal container must stay painted, even when the
+   text inside it still uses a separate scroll reveal. */
+body.animate-in .hero-art.reveal,
+body.animate-in .service-hero-art.reveal,
+body.animate-in .about-visual.reveal:has(img:not(.brand-icon)),
+body.animate-in .reveal:has(img:not(.brand-icon)),
+body.animate-in .scroll-reveal:has(img:not(.brand-icon)){
+ opacity:1!important;
+ transform:none!important;
+ translate:none!important;
+ scale:1!important;
+ rotate:none!important;
+ transition:none!important;
+ animation:none!important;
+}
+
 /* Photos are deliberately stationary; only text and non-photographic UI reveal on scroll.
    Preserve static decorative frame transforms (e.g. rotated portfolio cards). */
 body main img,body main picture,body main video,
