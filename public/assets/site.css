@@ -485,33 +485,32 @@ span.eyebrow:not(.badge-hero){display:none!important}
 @keyframes swipe-guide-dot{to{transform:translateX(26px)}}
 @media(prefers-reduced-motion:reduce){.swipe-guide-motion i{animation:none;transform:translateX(13px)}}
 
-/* Keep the shell in place while cached service content swaps without a reload. */
-html.swipe-tracking,html.swipe-exiting{overflow-x:hidden;background:#08192d}
-html.swipe-tracking body,html.swipe-exiting body{background:#08192d;backface-visibility:hidden}
-html.swipe-tracking body{will-change:transform,opacity,filter}
-html.swipe-exiting body{will-change:transform,opacity,filter}
+/* A single, edge-to-edge slide keeps route changes connected to the swipe. */
+html.swipe-tracking{overflow-x:hidden;background:var(--surface-page,#fff)}
+[data-theme="dark"].swipe-tracking{background:#0c1624}
+html.swipe-tracking body{will-change:transform}
 html.swipe-tracking::after{
- content:"";position:fixed;z-index:9999;top:0;bottom:0;width:7px;pointer-events:none;
- opacity:.95;animation:swipe-edge-pulse .22s ease-in-out infinite alternate
+ content:"";position:fixed;z-index:9999;top:0;bottom:0;width:3px;pointer-events:none;
+ background:linear-gradient(180deg,#f1d39c,#b58a52);opacity:.88
 }
-html.swipe-tracking[data-swipe-dir="next"]::after{right:0;background:linear-gradient(90deg,#a8793b,#f2d9a9);box-shadow:-10px 0 34px #c99e5fbb}
-html.swipe-tracking[data-swipe-dir="previous"]::after{left:0;background:linear-gradient(90deg,#a8793b,#f2d9a9);box-shadow:10px 0 34px #c99e5fbb}
-@keyframes swipe-edge-pulse{to{opacity:.35;filter:brightness(1.55)}}
-@keyframes raps-route-in-next{
- 0%{opacity:1;transform:perspective(900px) translate3d(86vw,0,0) scale(.82) rotateY(-9deg)}
- 70%{opacity:1;transform:perspective(900px) translate3d(-4vw,0,0) scale(1.025) rotateY(1deg)}
- 88%{opacity:1;transform:perspective(900px) translate3d(1vw,0,0) scale(.995) rotateY(0)}
- 100%{opacity:1;transform:perspective(900px) translate3d(0,0,0) scale(1) rotateY(0)}
+html.swipe-tracking[data-swipe-dir="next"]::after{right:0}
+html.swipe-tracking[data-swipe-dir="previous"]::after{left:0}
+@supports (view-transition-name:root){
+ @view-transition{navigation:none}
+ html::view-transition-group(root){animation-duration:340ms;animation-timing-function:cubic-bezier(.22,.7,.18,1)}
+ html::view-transition-old(root),html::view-transition-new(root){animation-duration:340ms;animation-timing-function:cubic-bezier(.22,.7,.18,1);mix-blend-mode:normal}
+ html[data-route-direction="next"]::view-transition-old(root){animation-name:raps-route-out-left}
+ html[data-route-direction="next"]::view-transition-new(root){animation-name:raps-route-in-right}
+ html[data-route-direction="previous"]::view-transition-old(root){animation-name:raps-route-out-right}
+ html[data-route-direction="previous"]::view-transition-new(root){animation-name:raps-route-in-left}
 }
-@keyframes raps-route-in-previous{
- 0%{opacity:1;transform:perspective(900px) translate3d(-86vw,0,0) scale(.82) rotateY(9deg)}
- 70%{opacity:1;transform:perspective(900px) translate3d(4vw,0,0) scale(1.025) rotateY(-1deg)}
- 88%{opacity:1;transform:perspective(900px) translate3d(-1vw,0,0) scale(.995) rotateY(0)}
- 100%{opacity:1;transform:perspective(900px) translate3d(0,0,0) scale(1) rotateY(0)}
-}
+@keyframes raps-route-out-left{to{transform:translateX(-100vw)}}
+@keyframes raps-route-in-right{from{transform:translateX(100vw)}to{transform:translateX(0)}}
+@keyframes raps-route-out-right{to{transform:translateX(100vw)}}
+@keyframes raps-route-in-left{from{transform:translateX(-100vw)}to{transform:translateX(0)}}
+@keyframes raps-route-fallback-next{from{opacity:.9;translate:2% 0}to{opacity:1;translate:0 0}}
+@keyframes raps-route-fallback-previous{from{opacity:.9;translate:-2% 0}to{opacity:1;translate:0 0}}
 @media(prefers-reduced-motion:no-preference){
- body.swipe-entering{backface-visibility:hidden;will-change:transform,opacity}
- body.swipe-arrive-next{animation:raps-route-in-next .27s cubic-bezier(.2,1,.35,1) both}
- body.swipe-arrive-previous{animation:raps-route-in-previous .27s cubic-bezier(.2,1,.35,1) both}
+ body.route-content-enter-next{animation:raps-route-fallback-next 340ms cubic-bezier(.22,.7,.18,1) both}
+ body.route-content-enter-previous{animation:raps-route-fallback-previous 340ms cubic-bezier(.22,.7,.18,1) both}
 }
-@media(prefers-reduced-motion:reduce){html.swipe-tracking::after{animation:none}}

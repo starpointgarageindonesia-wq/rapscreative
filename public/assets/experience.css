@@ -128,23 +128,25 @@ body{background:var(--surface-page)}
 .portfolio-triptych{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:420px;padding:24px 0}
 .portfolio-preview{display:block;color:white!important;text-decoration:none!important;border:6px solid #14283f;border-radius:18px;aspect-ratio:3/4;overflow:hidden;box-shadow:0 25px 45px #10243c44;transition:transform .25s ease;min-width:0}
 
-/* Strong, repeatable scroll reveals with direction, depth, and a short stagger. */
+/* Cinematic scroll motion across every page section, with short, readable reveals. */
 @media(prefers-reduced-motion:no-preference){
  body.animate-in .reveal,body.animate-in .scroll-reveal{
-  transition:opacity .22s ease,translate .34s cubic-bezier(.2,1.05,.3,1),scale .34s cubic-bezier(.2,1.05,.3,1),rotate .34s cubic-bezier(.2,1.05,.3,1),filter .22s ease;
+  transition:opacity .4s ease,translate .56s cubic-bezier(.22,.7,.18,1),scale .56s cubic-bezier(.22,.7,.18,1);
   transition-delay:var(--reveal-stagger,0ms);transform-origin:center
  }
  body.animate-in .reveal{transform:none}
  body.animate-in .reveal:not(.seen),body.animate-in .scroll-reveal:not(.seen){
-  opacity:0;translate:0 var(--reveal-y,78px);scale:.84;rotate:var(--reveal-angle,-2deg);
-  filter:blur(12px)
+  opacity:0;translate:var(--reveal-x,0px) var(--reveal-y,56px);scale:.93
  }
  body.animate-in .reveal.seen,body.animate-in .scroll-reveal.seen{
-  opacity:1;translate:0 0;scale:1;rotate:0deg;filter:blur(0)
+  opacity:1;translate:0 0;scale:1
  }
- body.swipe-entering .reveal,body.swipe-entering .scroll-reveal{
-  opacity:1!important;translate:0 0!important;scale:1!important;rotate:0deg!important;
-  filter:none!important;transition:none!important
+ body.animate-in .service-tile,body.animate-in .story-card,body.animate-in .price-card,
+ body.animate-in .rc-card,body.animate-in .raps-web-shot-card,body.animate-in .raps-web-work-card{transform-origin:50% 80%}
+ body.animate-in .hero-art-halo,body.animate-in .hero-shot img,body.animate-in .service-hero-art,
+ body.animate-in .portfolio-montage img,body.animate-in .service-visual img,body.animate-in .about-visual-card,
+ body.animate-in .project-detail-art,body.animate-in .raps-web-shot-browser{
+  translate:0 var(--motion-y,0px);scale:var(--motion-scale,1);transform-origin:center;will-change:translate,scale
  }
 }
 @media(prefers-reduced-motion:reduce){
