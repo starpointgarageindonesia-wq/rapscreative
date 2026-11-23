@@ -162,6 +162,24 @@
   pane.className="raps-route-native-preview "+previewBody.className;
   pane.setAttribute("aria-hidden","true");pane.dataset.routePreview=key;pane.dataset.ready="false";
   pane.append(...Array.from(previewBody.childNodes));
+  // Preserve the same header and swipe guide geometry between both pages.
+  if(key.startsWith("/en/")===currentPath.startsWith("/en/")){
+   const liveHeader=document.querySelector(".site-header"),nextHeader=pane.querySelector(".site-header");
+   if(liveHeader&&nextHeader){
+    const copy=liveHeader.cloneNode(true);
+    copy.querySelectorAll("nav a").forEach(a=>{
+     const active=normalize(a.getAttribute("href")||"/")===key;
+     if(active)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");
+    });
+    nextHeader.replaceWith(copy);
+   }
+   const guide=document.querySelector(".swipe-guide"),header=pane.querySelector(".site-header");
+   if(guide&&header){
+    const copy=guide.cloneNode(true),nextIndex=routes.indexOf(key),count=copy.querySelector(".swipe-guide-count");
+    if(count&&nextIndex>=0)count.textContent=labels[nextIndex]+" · "+(nextIndex+1)+"/"+routes.length;
+    header.after(copy);
+   }
+  }
   const direction=previewDirection(key),font=getComputedStyle(body),surface=root.dataset.theme==="dark"?"#0c1624":"#f7f8f9";
   Object.assign(pane.style,{position:"fixed",zIndex:"10000",inset:"0",width:"100vw",height:"100vh",
    overflow:"hidden",border:"0",borderRadius:"0",boxShadow:"none",pointerEvents:"none",
