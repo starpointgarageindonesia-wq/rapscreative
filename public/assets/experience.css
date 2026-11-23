@@ -148,9 +148,12 @@ body{background:var(--surface-page)}
  }
  body.animate-in .service-tile,body.animate-in .story-card,body.animate-in .price-card,
  body.animate-in .rc-card,body.animate-in .raps-web-shot-card,body.animate-in .raps-web-work-card{transform-origin:50% 80%;backface-visibility:hidden}
- body.animate-in main img,body.animate-in .hero-art-halo,body.animate-in .service-hero-art,
- body.animate-in .project-detail-art,body.animate-in .raps-web-shot-browser,body.animate-in .portfolio-preview{
-  translate:0 var(--motion-y,0px);scale:var(--motion-scale,1);rotate:x var(--motion-angle,0deg);transform-origin:center;backface-visibility:hidden
+ /* No parallax, zoom, tilt or movement on photography while scrolling. */
+ body.animate-in main img,body.animate-in main picture,body.animate-in main video,
+ body.animate-in .hero-art-halo,body.animate-in .service-hero-art,
+ body.animate-in .project-detail-art,body.animate-in .raps-web-shot-browser,
+ body.animate-in .portfolio-preview{
+  translate:none!important;scale:1!important;rotate:none!important;
  }
  body.animate-in main section,.service-tiles,.story-grid,.pricing-grid,.pricing-cards,.portfolio-triptych{perspective:1400px;transform-style:preserve-3d}
 }
@@ -159,7 +162,7 @@ body{background:var(--surface-page)}
   opacity:1!important;translate:none!important;scale:none!important;rotate:none!important;filter:none!important;transition:none!important
  }
 }
-.portfolio-preview:hover{transform:translateY(-12px)!important}
+.portfolio-preview:hover{box-shadow:0 25px 45px #10243c44}
 .portfolio-preview--garage{grid-column:1/7;grid-row:1;background:linear-gradient(145deg,#090f18,#193453 65%,#7d2529);transform:rotate(-6deg);z-index:2}
 .portfolio-preview--cireng{grid-column:5/10;grid-row:1;background:linear-gradient(145deg,#fff0ce,#d28b39 65%,#99532d);transform:translateY(25px) rotate(4deg);z-index:3}
 .portfolio-preview--profile{grid-column:9/13;grid-row:1;background:linear-gradient(145deg,#102b48,#3e6886 65%,#c7a779);transform:rotate(7deg);z-index:1}
@@ -200,3 +203,16 @@ body{background:var(--surface-page)}
 @media(max-width:1000px){.page-website .service-hero-grid{width:calc(100% - 44px);grid-template-columns:1fr 1fr;min-height:0;padding:55px 0 10px}.page-website .service-hero-copy h1{font-size:clamp(35px,4.8vw,56px)}.page-website .service-hero-art{min-height:360px}.page-website .website-feature-rail{width:calc(100% - 44px)}.page-website .website-feature{padding:8px 10px}}
 @media(max-width:760px){.page-website .service-hero-grid{grid-template-columns:1fr;width:calc(100% - 34px);padding:42px 0 8px}.page-website .service-hero-copy h1{font-size:clamp(39px,9vw,59px)}.page-website .service-hero-art{min-height:0;margin:12px 0 0}.page-website .portfolio-montage img{width:100%;max-width:100%}.page-website .website-feature-rail{width:calc(100% - 34px);grid-template-columns:repeat(2,minmax(0,1fr));padding:11px;margin-bottom:24px}.page-website .website-feature{padding:12px 9px;min-height:70px}.page-website .website-feature:nth-child(2){border:0}.page-website .website-feature:nth-child(-n+2){border-bottom:1px solid #ffffff3a}}
 @media(max-width:420px){.page-website .service-hero-copy h1{font-size:clamp(32px,9vw,45px)}}
+
+/* Photos are deliberately stationary; only text and non-photographic UI reveal on scroll.
+   Preserve static decorative frame transforms (e.g. rotated portfolio cards). */
+body main img,body main picture,body main video,
+body .hero-shot,body .hero-art-halo,body .service-hero-art,
+body .project-detail-art,body .raps-web-shot-browser,
+body .raps-web-shot-card,body .raps-web-work-card,body .portfolio-preview,
+body .portfolio-stack{
+ translate:none!important;
+ scale:1!important;
+ rotate:none!important;
+ animation:none!important;
+}
