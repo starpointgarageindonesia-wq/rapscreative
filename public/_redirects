@@ -1,0 +1,10 @@
+# Permanent redirects for retired RAPS Creative pages.
+# Preserve links already discovered by Google and other search engines.
+/harga/ /paket/ 301
+/harga /paket/ 301
+/en/pricing/ /en/bundles/ 301
+/en/pricing /en/bundles/ 301
+/content-creation/ /social-media/#content-scriptwriting 301
+/content-creation /social-media/#content-scriptwriting 301
+/en/content-creation/ /en/social-media/#content-scriptwriting 301
+/en/content-creation /en/social-media/#content-scriptwriting 301
