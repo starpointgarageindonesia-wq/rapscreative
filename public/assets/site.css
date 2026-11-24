@@ -515,3 +515,6 @@ html[data-route-direction="previous"]::view-transition-new(root){animation-name:
  .desktop-nav{gap:clamp(7px,1vw,15px)}
  .desktop-nav a{font-size:clamp(10.5px,.82vw,12px)}
 }
+
+/* Show all collaboration brand names in uppercase without changing animation. */
+.brand-marquee-group > span,.brand-marquee-group > a{text-transform:uppercase}
