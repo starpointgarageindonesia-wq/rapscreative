@@ -508,3 +508,10 @@ html[data-route-direction="previous"]::view-transition-new(root){animation-name:
 @media(prefers-reduced-motion:reduce){
  html::view-transition-old(root),html::view-transition-new(root){animation-duration:.01ms!important}
 }
+
+/* Show Paket Bundling and Bundles in the global desktop navigation without overlap. */
+@media (min-width:881px) and (max-width:1600px){
+ .nav-shell{gap:12px}
+ .desktop-nav{gap:clamp(7px,1vw,15px)}
+ .desktop-nav a{font-size:clamp(10.5px,.82vw,12px)}
+}
