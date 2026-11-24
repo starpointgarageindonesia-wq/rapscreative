@@ -139,8 +139,8 @@
 "use strict";
 const root=document.documentElement;
 const normalize=value=>{const p=new URL(value,location.href).pathname.replace(/\/index\.html$/,"/").replace(/\/{2,}/g,"/");return p.endsWith("/")?p:p+"/"};
-const routesFor=path=>path.startsWith("/en/")?["/en/","/en/website/","/en/ugc/","/en/editing/","/en/content-creation/","/en/advertising/","/en/marketing/","/en/digital-invitation/","/en/social-media/","/en/bundles/"]:["/","/website/","/ugc/","/editing/","/content-creation/","/advertising/","/marketing/","/undangan-digital/","/social-media/","/paket/"];
-const labelsFor=en=>en?["Home","Website","UGC","Editing","Content","Advertising","Marketing","Invitation","Social","Bundles"]:["Beranda","Website","UGC","Editing","Konten","Advertising","Marketing","Undangan","Social Media","Bundling"];
+const routesFor=path=>path.startsWith("/en/")?["/en/","/en/website/","/en/ugc/","/en/editing/","/en/advertising/","/en/marketing/","/en/digital-invitation/","/en/social-media/","/en/bundles/"]:["/","/website/","/ugc/","/editing/","/advertising/","/marketing/","/undangan-digital/","/social-media/","/paket/"];
+const labelsFor=en=>en?["Home","Website","UGC","Editing","Advertising","Marketing","Invitation","Social","Bundles"]:["Beranda","Website","UGC","Editing","Advertising","Marketing","Undangan","Social Media","Bundling"];
 const routes=routesFor(location.pathname),labels=labelsFor(location.pathname.startsWith("/en/"));
 const currentPath=normalize(location.pathname),index=routes.indexOf(currentPath);
 if(index<0)return;
